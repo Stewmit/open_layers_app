@@ -2,7 +2,6 @@ import 'ol/ol.css';
 import Tile from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
 import { fromLonLat } from 'ol/proj';
-import { Stamen} from 'ol/source';
 import { Group } from 'ol/layer';
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -13,6 +12,8 @@ import Icon from 'ol/style/Icon';
 import GeoJSON from 'ol/format/GeoJSON';
 import { Overlay } from 'ol';
 import $ from "jquery";
+import { Feature } from 'ol/index';
+import {Point} from 'ol/geom';
 
 
 const BASE_LAYER_TITLE = 'baseLayer'
@@ -78,22 +79,6 @@ function loadMoscowTable() {
 
             var myTab = document.getElementById('data-tab')
             var html = ''
-            
-            // for (let i = 0; i < v.data.length/1000; i++) {
-            //     html += '<tr>'
-            //     for (let j = 0; j < v.data[i].length; j++) {
-            //         html += `<td>${v.data[i][j]}</td>`
-            //     }
-            //     html += '</tr>'
-            // }
-            
-            // Заголовки
-            // html += '<tr>'
-            // for (let i = 0; v.data[1].length; i++) {
-            //     html += `<th>${v.data[1][i]}</th>`
-            //     console.log(v.data[1][i])
-            // }
-            // html += '</tr>'
 
             for (let k = 0; k < v.data[0].length; k++) {
                 html += `<th>${v.data[0][k]}</th>`
@@ -118,6 +103,49 @@ function loadMoscowTable() {
 // Скрытть таблицу
 function hideTable() {
     document.getElementById('data-tab').innerHTML = ''
+}
+
+// Загрузка маркеров из 2-ого файла
+function loadMoscowMarkers() {
+    try {
+        var markerList = []
+
+        const response = fetch('https://raw.githubusercontent.com/nextgis/metro4all/master/data/msk/portals.csv')
+            .then(response => response.text())
+            .then(v => Papa.parse(v))
+            .catch(err => console.log(err))
+
+        response.then(v => {
+
+            var latCol, lonCol
+
+            for (let k = 0; k < v.data[0].length; k++) {
+                if (v.data[0][k] == 'lat') {
+                    latCol = k
+                }
+                else if (v.data[0][k] == 'lon') {
+                    lonCol = k
+                }
+            }
+
+            for (let i = 1; i < v.data.length - 1; i++) {
+                let lat = v.data[i][latCol]
+                let lon = v.data[i][lonCol]
+                
+                var point = new Point(fromLonLat([lon, lat]))
+                var marker = new Feature(point)
+
+                markerList.push(marker)
+            }
+
+            moscowLayer.setSource(new VectorSource({
+                features: markerList,
+            }))
+        })
+    }
+    catch (error) {
+        console.error(error);
+    }
 }
 
 // Загрузка состояния текущей позиции
@@ -211,10 +239,17 @@ var washingtonLayer = new VectorLayer({
     title: WASHINGTON_LAYER_TITLE
 });
 
-const moscowLayer = new Tile({
-    source: new Stamen({layer: 'watercolor'}),
+const moscowLayer = new VectorLayer({
     visible: false,
-    title: MOSCOW_LAYER_TITLE
+    title: MOSCOW_LAYER_TITLE,
+    style: new Style({
+        image: new Icon({
+            anchor: [0.5, 46],
+            anchorXUnits: 'fraction',
+            anchorYUnits: 'pixels',
+            src: 'http://openlayers.org/en/latest/examples/data/icon.png'
+        })
+    }),
 });
 
 const layersGroup = new Group({
@@ -242,6 +277,8 @@ if (currentLayerTitle != null) {
             break
         case MOSCOW_LAYER_TITLE:
             baseLayerElements[2].checked = true;
+            loadMoscowTable()
+            loadMoscowMarkers()
             break;
     }
 
@@ -271,12 +308,11 @@ for (let layerRadioButton of layerRadioButtons) {
                 hideTable()
                 break
             case WASHINGTON_LAYER_TITLE:
-                hideTable()
                 loadWashingtonTable()
                 break
             case MOSCOW_LAYER_TITLE:
-                hideTable()
                 loadMoscowTable()
+                loadMoscowMarkers()
                 break;
         }
     })
