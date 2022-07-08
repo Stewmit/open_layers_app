@@ -67,49 +67,53 @@ function loadWashingtonTable() {
 }
 
 // Загрузка таблицы из 2-ого файла
-// function loadSecondDataTable() {
-//     try {
-//         const response = fetch('https://raw.githubusercontent.com/nextgis/metro4all/master/data/msk/portals.csv')
-//             .then(response => response.text())
-//             .then(v => Papa.parse(v))
-//             .catch(err => console.log(err))
+function loadMoscowTable() {
+    try {
+        const response = fetch('https://raw.githubusercontent.com/nextgis/metro4all/master/data/msk/portals.csv')
+            .then(response => response.text())
+            .then(v => Papa.parse(v))
+            .catch(err => console.log(err))
 
-//         response.then(v => {
+        response.then(v => {
 
+            var myTab = document.getElementById('data-tab')
+            var html = ''
             
-//             var myTab = document.getElementById('data-tab')
-//             var html = ''
+            // for (let i = 0; i < v.data.length/1000; i++) {
+            //     html += '<tr>'
+            //     for (let j = 0; j < v.data[i].length; j++) {
+            //         html += `<td>${v.data[i][j]}</td>`
+            //     }
+            //     html += '</tr>'
+            // }
             
-//             for (let i = 0; i < v.data.length/1000; i++) {
-//                 html += '<tr>'
-//                 for (let j = 0; j < v.data[i].length; j++) {
-//                     html += `<td>${v.data[i][j]}</td>`
-//                 }
-//                 html += '</tr>'
-//             }
-            
-//             Заголовки
-//             html += '<tr>'
-//             for (let i = 0; v.data[1].length; i++) {
-//                 html += `<th>${v.data[1][i]}</th>`
-//             }
-//             html += '</tr>'
+            // Заголовки
+            // html += '<tr>'
+            // for (let i = 0; v.data[1].length; i++) {
+            //     html += `<th>${v.data[1][i]}</th>`
+            //     console.log(v.data[1][i])
+            // }
+            // html += '</tr>'
 
-//             for (let i = 1; i < v.data.length - 1; i++) {
-//                 html += '<tr>'
-//                 for (let j = 0; j < v.data[i].length; j++) {
-//                     html += `<td>${v.data[i][j]}</td>`
-//                 }
-//                 html += '</tr>'
-//             }
+            for (let k = 0; k < v.data[0].length; k++) {
+                html += `<th>${v.data[0][k]}</th>`
+            }
+
+            for (let i = 1; i < v.data.length - 1; i++) {
+                html += '<tr>'
+                for (let j = 0; j < v.data[i].length; j++) {
+                    html += `<td>${v.data[i][j]}</td>`
+                }
+                html += '</tr>'
+            }
             
-//             myTab.innerHTML = html
-//         })
-//     }
-//     catch (error) {
-//         console.error(error);
-//     }
-// }
+            myTab.innerHTML = html
+        })
+    }
+    catch (error) {
+        console.error(error);
+    }
+}
 
 // Скрытть таблицу
 function hideTable() {
@@ -118,16 +122,18 @@ function hideTable() {
 
 // Загрузка состояния текущей позиции
 var myView = new View({})
-const currentCenter = localStorage.getItem('currentCenter')
-const currentZoom = localStorage.getItem('currentZoom')
-if (currentCenter === null || currentZoom === null) {
-    myView.setCenter(fromLonLat([-77.03934833759097, 38.89932830161759]))
-    myView.setZoom(16)
-}
-else {
-    myView.setCenter(currentCenter.split(',').map(val => parseFloat(val)))
-    myView.setZoom(currentZoom)
-}
+myView.setCenter(fromLonLat([-77.03934833759097, 38.89932830161759]))
+myView.setZoom(16)
+// const currentCenter = localStorage.getItem('currentCenter')
+// const currentZoom = localStorage.getItem('currentZoom')
+// if (currentCenter === null || currentZoom === null) {
+//     myView.setCenter(fromLonLat([-77.03934833759097, 38.89932830161759]))
+//     myView.setZoom(16)
+// }
+// else {
+//     myView.setCenter(currentCenter.split(',').map(val => parseFloat(val)))
+//     myView.setZoom(currentZoom)
+// }
 
 // Сохранение текущей позиции
 myView.on('change:center', function() { 
@@ -265,10 +271,12 @@ for (let layerRadioButton of layerRadioButtons) {
                 hideTable()
                 break
             case WASHINGTON_LAYER_TITLE:
+                hideTable()
                 loadWashingtonTable()
                 break
             case MOSCOW_LAYER_TITLE:
                 hideTable()
+                loadMoscowTable()
                 break;
         }
     })
@@ -284,6 +292,7 @@ map.addOverlay(overlayLayer)
 // Обработка нажатия на маркер 2-ого слоя
 const overlayFeatureName = document.getElementById('feature-name')
 const overlayFeatureAddress = document.getElementById('feature-address')
+
 map.on('click', function (e) {
     let clickedCoordinate = e.coordinate
     map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {

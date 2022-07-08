@@ -10,23 +10,72 @@ body {
 
 #map {
     width: 100%;
-    height: 450px;
+    height: 60vh;
+    z-index: 1;
+}
+
+.settings-panel {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    z-index: 2;
+    display: inline-flex;
+    justify-content: left;
+    background-color: #eee;
+    border-radius: 15px;
+    opacity: 0.9;
+}
+
+.present-btn {
+    font-size: 18px;
+    color: #444;
+    width: 60%;
+    height: 80%;
+    margin-left: 20px;
+    margin-top: 7px;
+    margin-bottom: 6px;
+    border-radius: 20px;
+    border: 1px solid #444;
+    padding: 3px 6px 3px 6px;
+}
+
+.present-btn:hover {
+    outline: 1px solid #444;
+}
+
+.present-btn:active {
+    background-color: #ddd;
 }
 
 .layer-bar {
+    margin-left: 10px;
+    margin-right: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .check {
+    width: auto;
     margin-left: 5px;
 }
 
-.present {
-    margin-left: 10px;
-    margin-top: 5px;
-    margin-bottom: 5px;
+.filter-field {
+    margin: 7px 15px 7px 35px;
+    border-radius: 10px;
+    border: 1px solid #555;
+    background-color: #eee;
+    padding: 5px;
+    background: url("https://findicons.com/files/icons/1389/g5_system/32/toolbar_find.png") top right no-repeat;
+    background-position: 97% 4px;
+    background-size: 25px 25px;
+    padding-right: 35px;   
+    padding-left: 8px;
+}
+
+.filter-field:focus {
+    border: 1px solid #333;
+    outline: 1px solid #333;
 }
 
 .overlay-container {
@@ -55,28 +104,13 @@ body {
 }
 
 .table-container {
-    margin-top: 10px;
     width: 100%;
-    height: 200px;
+    height: 40vh;
     overflow-y: scroll;
-    border: 1px solid grey;
 }
 
 .tab-row{
     cursor: pointer;
-}
-
-.filter-field {
-    margin-top: 10px;
-    margin-left: 7px;
-    border-radius: 8px;
-    border: 1px solid #555;
-    padding: 5px;
-}
-
-.filter-field:focus {
-    border: 1px solid #333;
-    outline: 1px solid #333;
 }
 
 /*# sourceMappingURL=/style.e308ff8e.css.map */
