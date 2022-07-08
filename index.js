@@ -14,6 +14,7 @@ import { Overlay } from 'ol';
 import $ from "jquery";
 import { Feature } from 'ol/index';
 import {Point} from 'ol/geom';
+import { xhr } from 'ol/featureloader';
 
 
 const BASE_LAYER_TITLE = 'baseLayer'
@@ -42,7 +43,17 @@ $("body").on("click", "#data-tab tr", function () {
     flyTo(point, function () {});
 });
 
-// Загрузка таблицы из 1-ого файла
+
+document.addEventListener('keyup', onFilterChanged)
+
+function onFilterChanged() {
+    var filter = document.getElementById('filter-field')
+
+    var text = filter.value
+
+    console.log(text)
+}
+
 function loadWashingtonTable() {
     try {
         fetch("https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson")
@@ -77,7 +88,6 @@ function loadWashingtonTable() {
     }
 }
 
-// Загрузка таблицы из 2-ого файла
 function loadMoscowTable() {
     try {
         const response = fetch('https://raw.githubusercontent.com/nextgis/metro4all/master/data/msk/portals.csv')
@@ -110,12 +120,10 @@ function loadMoscowTable() {
     }
 }
 
-// Скрытть таблицу
 function hideTable() {
     document.getElementById('data-tab').innerHTML = ''
 }
 
-// Загрузка маркеров из 2-ого файла
 function loadMoscowMarkers() {
     try {
         var markerList = []

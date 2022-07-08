@@ -103917,6 +103917,8 @@ var _index = require("ol/index");
 
 var _geom = require("ol/geom");
 
+var _featureloader = require("ol/featureloader");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
@@ -103943,7 +103945,14 @@ var MOSCOW_LAYER_TITLE = 'moscowLayer'; // Обработка нажатия н�
 
   var point = (0, _proj.fromLonLat)([lon, lat]);
   flyTo(point, function () {});
-}); // Загрузка таблицы из 1-ого файла
+});
+document.addEventListener('keyup', onFilterChanged);
+
+function onFilterChanged() {
+  var filter = document.getElementById('filter-field');
+  var text = filter.value;
+  console.log(text);
+}
 
 function loadWashingtonTable() {
   try {
@@ -103974,8 +103983,7 @@ function loadWashingtonTable() {
   } catch (error) {
     console.error(error);
   }
-} // Загрузка таблицы из 2-ого файла
-
+}
 
 function loadMoscowTable() {
   try {
@@ -104009,13 +104017,11 @@ function loadMoscowTable() {
   } catch (error) {
     console.error(error);
   }
-} // Скрытть таблицу
-
+}
 
 function hideTable() {
   document.getElementById('data-tab').innerHTML = '';
-} // Загрузка маркеров из 2-ого файла
-
+}
 
 function loadMoscowMarkers() {
   try {
@@ -104246,7 +104252,7 @@ map.on('click', function (e) {
     }
   });
 });
-},{"ol/ol.css":"node_modules/ol/ol.css","ol/layer/Tile":"node_modules/ol/layer/Tile.js","ol/source/OSM":"node_modules/ol/source/OSM.js","ol/proj":"node_modules/ol/proj.js","ol/layer":"node_modules/ol/layer.js","ol/Map":"node_modules/ol/Map.js","ol/View":"node_modules/ol/View.js","ol/style/Style":"node_modules/ol/style/Style.js","ol/layer/Vector":"node_modules/ol/layer/Vector.js","ol/source/Vector":"node_modules/ol/source/Vector.js","ol/style/Icon":"node_modules/ol/style/Icon.js","ol/format/GeoJSON":"node_modules/ol/format/GeoJSON.js","ol":"node_modules/ol/index.js","jquery":"node_modules/jquery/dist/jquery.js","ol/index":"node_modules/ol/index.js","ol/geom":"node_modules/ol/geom.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"ol/ol.css":"node_modules/ol/ol.css","ol/layer/Tile":"node_modules/ol/layer/Tile.js","ol/source/OSM":"node_modules/ol/source/OSM.js","ol/proj":"node_modules/ol/proj.js","ol/layer":"node_modules/ol/layer.js","ol/Map":"node_modules/ol/Map.js","ol/View":"node_modules/ol/View.js","ol/style/Style":"node_modules/ol/style/Style.js","ol/layer/Vector":"node_modules/ol/layer/Vector.js","ol/source/Vector":"node_modules/ol/source/Vector.js","ol/style/Icon":"node_modules/ol/style/Icon.js","ol/format/GeoJSON":"node_modules/ol/format/GeoJSON.js","ol":"node_modules/ol/index.js","jquery":"node_modules/jquery/dist/jquery.js","ol/index":"node_modules/ol/index.js","ol/geom":"node_modules/ol/geom.js","ol/featureloader":"node_modules/ol/featureloader.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
