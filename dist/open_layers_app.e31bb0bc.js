@@ -103930,9 +103930,17 @@ var WASHINGTON_LAYER_TITLE = 'washingtonLayer';
 var MOSCOW_LAYER_TITLE = 'moscowLayer'; // Обработка нажатия на строку таблицы
 
 (0, _jquery.default)("body").on("click", "#data-tab tr", function () {
+  var checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
   var currentRow = (0, _jquery.default)(this).closest("tr");
-  var lon = currentRow.find("td:eq(2)").text();
-  var lat = currentRow.find("td:eq(3)").text();
+
+  if (checkButtons[1].checked === true) {
+    var lon = currentRow.find("td:eq(2)").text();
+    var lat = currentRow.find("td:eq(3)").text();
+  } else if (checkButtons[2].checked === true) {
+    var lat = currentRow.find("td:eq(6)").text();
+    var lon = currentRow.find("td:eq(7)").text();
+  }
+
   var point = (0, _proj.fromLonLat)([lon, lat]);
   flyTo(point, function () {});
 }); // Загрузка таблицы из 1-ого файла
@@ -104049,18 +104057,19 @@ function loadMoscowMarkers() {
 
 
 var myView = new _View.default({});
-myView.setCenter((0, _proj.fromLonLat)([-77.03934833759097, 38.89932830161759]));
-myView.setZoom(16); // const currentCenter = localStorage.getItem('currentCenter')
-// const currentZoom = localStorage.getItem('currentZoom')
-// if (currentCenter === null || currentZoom === null) {
-//     myView.setCenter(fromLonLat([-77.03934833759097, 38.89932830161759]))
-//     myView.setZoom(16)
-// }
-// else {
-//     myView.setCenter(currentCenter.split(',').map(val => parseFloat(val)))
-//     myView.setZoom(currentZoom)
-// }
-// Сохранение текущей позиции
+var currentCenter = localStorage.getItem('currentCenter');
+var currentZoom = localStorage.getItem('currentZoom');
+
+if (currentCenter === null || currentZoom === null) {
+  myView.setCenter((0, _proj.fromLonLat)([-77.03934833759097, 38.89932830161759]));
+  myView.setZoom(16);
+} else {
+  myView.setCenter(currentCenter.split(',').map(function (val) {
+    return parseFloat(val);
+  }));
+  myView.setZoom(currentZoom);
+} // Сохранение текущей позиции
+
 
 myView.on('change:center', function () {
   var center = myView.getCenter();
@@ -104265,7 +104274,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53993" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56254" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

@@ -23,9 +23,19 @@ const MOSCOW_LAYER_TITLE = 'moscowLayer'
 
 // Обработка нажатия на строку таблицы
 $("body").on("click", "#data-tab tr", function () {
+    
+    const checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]')
+    
     var currentRow=$(this).closest("tr"); 
-    var lon = currentRow.find("td:eq(2)").text();
-    var lat = currentRow.find("td:eq(3)").text();
+    
+    if (checkButtons[1].checked === true) {
+        var lon = currentRow.find("td:eq(2)").text();
+        var lat = currentRow.find("td:eq(3)").text();
+    }
+    else if (checkButtons[2].checked === true) {
+        var lat = currentRow.find("td:eq(6)").text();
+        var lon = currentRow.find("td:eq(7)").text();
+    }
 
     const point = fromLonLat([lon, lat]);
 
@@ -150,18 +160,17 @@ function loadMoscowMarkers() {
 
 // Загрузка состояния текущей позиции
 var myView = new View({})
-myView.setCenter(fromLonLat([-77.03934833759097, 38.89932830161759]))
-myView.setZoom(16)
-// const currentCenter = localStorage.getItem('currentCenter')
-// const currentZoom = localStorage.getItem('currentZoom')
-// if (currentCenter === null || currentZoom === null) {
-//     myView.setCenter(fromLonLat([-77.03934833759097, 38.89932830161759]))
-//     myView.setZoom(16)
-// }
-// else {
-//     myView.setCenter(currentCenter.split(',').map(val => parseFloat(val)))
-//     myView.setZoom(currentZoom)
-// }
+const currentCenter = localStorage.getItem('currentCenter')
+const currentZoom = localStorage.getItem('currentZoom')
+
+if (currentCenter === null || currentZoom === null) {
+    myView.setCenter(fromLonLat([-77.03934833759097, 38.89932830161759]))
+    myView.setZoom(16)
+}
+else {
+    myView.setCenter(currentCenter.split(',').map(val => parseFloat(val)))
+    myView.setZoom(currentZoom)
+}
 
 // Сохранение текущей позиции
 myView.on('change:center', function() { 
