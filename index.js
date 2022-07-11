@@ -15,14 +15,84 @@ import $ from "jquery";
 import { Feature } from 'ol/index';
 import {Point} from 'ol/geom';
 
-
 const BASE_LAYER_TITLE = 'baseLayer'
 const WASHINGTON_LAYER_TITLE = 'washingtonLayer'
 const MOSCOW_LAYER_TITLE = 'moscowLayer'
 
+function getWashingtonHeaders() {
+    let html = ''
+    html += '<tr>'
+    html += '<th>Name</th>'
+    html += '<th>Address</th>'
+    html += '<th>Longitude</th>'
+    html += '<th>Latitude</th>'
+    html += '</tr>'
+    return html
+}
+
+function loadWashingtonTable() {
+    try {
+        fetch("https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson")
+            .then(resp => resp.json())
+            .then(data => {
+                let table = document.getElementById('data-table')
+                let html = getWashingtonHeaders()
+
+                let filterText;
+                localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText')
+
+                for (let feature of data.features) {
+
+                    let name = feature.properties.name
+
+                    if (name.includes(filterText)) {
+                        html += '<tr class="tab-row">'
+                        html += `<td>${feature.properties.name}</td>`
+                        html += `<td>${feature.properties.address}</td>`
+                        html += `<td>${feature.geometry.coordinates[0]}</td>`
+                        html += `<td>${feature.geometry.coordinates[1]}</td>`
+                        html += '</tr>'
+                    }
+                }
+
+                table.innerHTML = html
+            })
+    }
+    catch (error) {
+        console.error(error);
+    }
+}
+
+function updateWashingtonTable() {
+    
+    let table = document.getElementById('data-table')
+    let html = getWashingtonHeaders()
+
+    let source = washingtonLayer.getSource()
+    let features = source.getFeatures()
+
+    let filterText;
+    localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText')
+
+    for (let feature of features) {
+        
+        let name = feature.get('name')
+
+        if (name.includes(filterText)) {
+            html += '<tr class="tab-row">'
+            html += `<td>${feature.get('name')}</td>`
+            html += `<td>${feature.get('address')}</td>`
+            html += `<td>${toLonLat(feature.getGeometry().getCoordinates())[0]}</td>`
+            html += `<td>${toLonLat(feature.getGeometry().getCoordinates())[1]}</td>`
+            html += '</tr>'
+        }
+    }
+
+    table.innerHTML = html
+}
 
 // Обработка нажатия на строку таблицы
-$("body").on("click", "#data-tab tr", function () {
+$("body").on("click", "#data-table tr", function () {
     
     const checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]')
     
@@ -44,89 +114,19 @@ $("body").on("click", "#data-tab tr", function () {
 
 
 document.addEventListener('keyup', onFilterChanged)
-
 function onFilterChanged() {
 
     var filter = document.getElementById('filter-field')
-
-    var text = filter.value
-    console.log(text)
-
-    localStorage.setItem('filterValue', text)
+    var filterText = filter.value
 
     const checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]')
 
-    let myTab = document.getElementById('data-tab')
-    let html = ''
-
     if (checkButtons[1].checked === true) {
-
-        html += '<tr>'
-        html += '<th>Название</th>'
-        html += '<th>Адрес</th>'
-        html += '<th>Долгота (lon)</th>'
-        html += '<th>Широта (lat)</th>'
-        html += '</tr>'
-
-        let source = washingtonLayer.getSource()
-        let features = source.getFeatures()
-         
-        let emptyStyle = new Style()
-
-        for (let feature of features) {
-            let name = feature.get('name')
-            if (name.includes(text)) {
-                feature.setStyle(markerStyle)
-                html += '<tr>'
-                html += `<td>${feature.get('name')}</td>`
-                html += `<td>${feature.get('address')}</td>`
-                html += `<td>${toLonLat(feature.getGeometry().getCoordinates())[0]}</td>`
-                html += `<td>${toLonLat(feature.getGeometry().getCoordinates())[1]}</td>`
-                html += '</tr>'
-            }
-            else {
-                feature.setStyle(emptyStyle)
-            }
-        }
+        localStorage.setItem('washingtonFilterText', filterText)
+        updateWashingtonTable()
     }
     else if (checkButtons[2].checked === true) {
         // Edit 2nd data
-    }
-
-    myTab.innerHTML = html
-}
-
-function loadWashingtonTable() {
-    try {
-        fetch("https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson")
-            .then(resp => resp.json())
-            .then(data => {
-                let myTab = document.getElementById('data-tab')
-                let html = ''
-
-                // Заголовки
-                html += '<tr>'
-                html += '<th>Название</th>'
-                html += '<th>Адрес</th>'
-                html += '<th>Долгота (lon)</th>'
-                html += '<th>Широта (lat)</th>'
-                html += '</tr>'
-
-                // Заполнение таблицы
-                for (let i = 0; i < data.features.length; i++) {
-                    html += '<tr class="tab-row">'
-                    html += `<td>${data.features[i].properties.name}</td>`
-                    html += `<td>${data.features[i].properties.address}</td>`
-                    html += `<td>${data.features[i].geometry.coordinates[0]}</td>`
-                    html += `<td>${data.features[i].geometry.coordinates[1]}</td>`
-                    html += '</tr>'
-                }
-
-                myTab.innerHTML = html;
-            });
-    }
-    catch (error) {
-        console.error(error);
     }
 }
 
@@ -139,7 +139,7 @@ function loadMoscowTable() {
 
         response.then(v => {
 
-            var myTab = document.getElementById('data-tab')
+            var myTab = document.getElementById('data-table')
             var html = ''
 
             for (let k = 0; k < v.data[0].length; k++) {
@@ -163,7 +163,7 @@ function loadMoscowTable() {
 }
 
 function hideTable() {
-    document.getElementById('data-tab').innerHTML = ''
+    document.getElementById('data-table').innerHTML = ''
 }
 
 function loadMoscowMarkers() {
@@ -336,6 +336,7 @@ if (currentLayerTitle != null) {
     const baseLayerElements = document.querySelectorAll('.layer-bar > input[type=radio]')
 
     let tableContainer = document.getElementById('table-container')
+    var filter = document.getElementById('filter-field')
     let myMap = document.getElementById('map')
     
     switch (currentLayerTitle) {
@@ -348,6 +349,10 @@ if (currentLayerTitle != null) {
         case WASHINGTON_LAYER_TITLE:
             baseLayerElements[1].checked = true;
             tableContainer.style.display = 'block'
+            let filterText
+            localStorage.getItem('washingtonFilterText') === null ? filterText = '' : 
+                filterText = localStorage.getItem('washingtonFilterText')
+            filter.value = filterText
             loadWashingtonTable()
             myMap.style.height = '60vh'
             map.updateSize()

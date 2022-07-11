@@ -103927,9 +103927,95 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
 var BASE_LAYER_TITLE = 'baseLayer';
 var WASHINGTON_LAYER_TITLE = 'washingtonLayer';
-var MOSCOW_LAYER_TITLE = 'moscowLayer'; // Обработка нажатия на строку таблицы
+var MOSCOW_LAYER_TITLE = 'moscowLayer';
 
-(0, _jquery.default)("body").on("click", "#data-tab tr", function () {
+function getWashingtonHeaders() {
+  var html = '';
+  html += '<tr>';
+  html += '<th>Name</th>';
+  html += '<th>Address</th>';
+  html += '<th>Longitude</th>';
+  html += '<th>Latitude</th>';
+  html += '</tr>';
+  return html;
+}
+
+function loadWashingtonTable() {
+  try {
+    fetch("https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson").then(function (resp) {
+      return resp.json();
+    }).then(function (data) {
+      var table = document.getElementById('data-table');
+      var html = getWashingtonHeaders();
+      var filterText;
+      localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText');
+
+      var _iterator = _createForOfIteratorHelper(data.features),
+          _step;
+
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var feature = _step.value;
+          var name = feature.properties.name;
+
+          if (name.includes(filterText)) {
+            html += '<tr class="tab-row">';
+            html += "<td>".concat(feature.properties.name, "</td>");
+            html += "<td>".concat(feature.properties.address, "</td>");
+            html += "<td>".concat(feature.geometry.coordinates[0], "</td>");
+            html += "<td>".concat(feature.geometry.coordinates[1], "</td>");
+            html += '</tr>';
+          }
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+
+      table.innerHTML = html;
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function updateWashingtonTable() {
+  var table = document.getElementById('data-table');
+  var html = getWashingtonHeaders();
+  var source = washingtonLayer.getSource();
+  var features = source.getFeatures();
+  var filterText;
+  localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText');
+
+  var _iterator2 = _createForOfIteratorHelper(features),
+      _step2;
+
+  try {
+    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+      var feature = _step2.value;
+      var name = feature.get('name');
+
+      if (name.includes(filterText)) {
+        html += '<tr class="tab-row">';
+        html += "<td>".concat(feature.get('name'), "</td>");
+        html += "<td>".concat(feature.get('address'), "</td>");
+        html += "<td>".concat((0, _proj.toLonLat)(feature.getGeometry().getCoordinates())[0], "</td>");
+        html += "<td>".concat((0, _proj.toLonLat)(feature.getGeometry().getCoordinates())[1], "</td>");
+        html += '</tr>';
+      }
+    }
+  } catch (err) {
+    _iterator2.e(err);
+  } finally {
+    _iterator2.f();
+  }
+
+  table.innerHTML = html;
+} // Обработка нажатия на строку таблицы
+
+
+(0, _jquery.default)("body").on("click", "#data-table tr", function () {
   var checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
   var currentRow = (0, _jquery.default)(this).closest("tr");
 
@@ -103948,83 +104034,13 @@ document.addEventListener('keyup', onFilterChanged);
 
 function onFilterChanged() {
   var filter = document.getElementById('filter-field');
-  var text = filter.value;
-  console.log(text);
-  localStorage.setItem('filterValue', text);
+  var filterText = filter.value;
   var checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
-  var myTab = document.getElementById('data-tab');
-  var html = '';
 
   if (checkButtons[1].checked === true) {
-    html += '<tr>';
-    html += '<th>Название</th>';
-    html += '<th>Адрес</th>';
-    html += '<th>Долгота (lon)</th>';
-    html += '<th>Широта (lat)</th>';
-    html += '</tr>';
-    var source = washingtonLayer.getSource();
-    var features = source.getFeatures();
-    var emptyStyle = new _Style.default();
-
-    var _iterator = _createForOfIteratorHelper(features),
-        _step;
-
-    try {
-      for (_iterator.s(); !(_step = _iterator.n()).done;) {
-        var feature = _step.value;
-        var name = feature.get('name');
-
-        if (name.includes(text)) {
-          feature.setStyle(markerStyle);
-          html += '<tr>';
-          html += "<td>".concat(feature.get('name'), "</td>");
-          html += "<td>".concat(feature.get('address'), "</td>");
-          html += "<td>".concat((0, _proj.toLonLat)(feature.getGeometry().getCoordinates())[0], "</td>");
-          html += "<td>".concat((0, _proj.toLonLat)(feature.getGeometry().getCoordinates())[1], "</td>");
-          html += '</tr>';
-        } else {
-          feature.setStyle(emptyStyle);
-        }
-      }
-    } catch (err) {
-      _iterator.e(err);
-    } finally {
-      _iterator.f();
-    }
+    localStorage.setItem('washingtonFilterText', filterText);
+    updateWashingtonTable();
   } else if (checkButtons[2].checked === true) {// Edit 2nd data
-  }
-
-  myTab.innerHTML = html;
-}
-
-function loadWashingtonTable() {
-  try {
-    fetch("https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson").then(function (resp) {
-      return resp.json();
-    }).then(function (data) {
-      var myTab = document.getElementById('data-tab');
-      var html = ''; // Заголовки
-
-      html += '<tr>';
-      html += '<th>Название</th>';
-      html += '<th>Адрес</th>';
-      html += '<th>Долгота (lon)</th>';
-      html += '<th>Широта (lat)</th>';
-      html += '</tr>'; // Заполнение таблицы
-
-      for (var i = 0; i < data.features.length; i++) {
-        html += '<tr class="tab-row">';
-        html += "<td>".concat(data.features[i].properties.name, "</td>");
-        html += "<td>".concat(data.features[i].properties.address, "</td>");
-        html += "<td>".concat(data.features[i].geometry.coordinates[0], "</td>");
-        html += "<td>".concat(data.features[i].geometry.coordinates[1], "</td>");
-        html += '</tr>';
-      }
-
-      myTab.innerHTML = html;
-    });
-  } catch (error) {
-    console.error(error);
   }
 }
 
@@ -104038,7 +104054,7 @@ function loadMoscowTable() {
       return console.log(err);
     });
     response.then(function (v) {
-      var myTab = document.getElementById('data-tab');
+      var myTab = document.getElementById('data-table');
       var html = '';
 
       for (var k = 0; k < v.data[0].length; k++) {
@@ -104063,7 +104079,7 @@ function loadMoscowTable() {
 }
 
 function hideTable() {
-  document.getElementById('data-tab').innerHTML = '';
+  document.getElementById('data-table').innerHTML = '';
 }
 
 function loadMoscowMarkers() {
@@ -104215,6 +104231,7 @@ var currentLayerTitle = localStorage.getItem('currentLayerTitle');
 if (currentLayerTitle != null) {
   var baseLayerElements = document.querySelectorAll('.layer-bar > input[type=radio]');
   var tableContainer = document.getElementById('table-container');
+  var filter = document.getElementById('filter-field');
   var myMap = document.getElementById('map');
 
   switch (currentLayerTitle) {
@@ -104228,6 +104245,9 @@ if (currentLayerTitle != null) {
     case WASHINGTON_LAYER_TITLE:
       baseLayerElements[1].checked = true;
       tableContainer.style.display = 'block';
+      var filterText;
+      localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText');
+      filter.value = filterText;
       loadWashingtonTable();
       myMap.style.height = '60vh';
       map.updateSize();
@@ -104252,12 +104272,12 @@ if (currentLayerTitle != null) {
 
 var layerRadioButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
 
-var _iterator2 = _createForOfIteratorHelper(layerRadioButtons),
-    _step2;
+var _iterator3 = _createForOfIteratorHelper(layerRadioButtons),
+    _step3;
 
 try {
-  for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-    var layerRadioButton = _step2.value;
+  for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+    var layerRadioButton = _step3.value;
     layerRadioButton.addEventListener('change', function () {
       var chosenLayerTitle = this.value;
       localStorage.setItem('currentLayerTitle', chosenLayerTitle);
@@ -104296,9 +104316,9 @@ try {
     });
   }
 } catch (err) {
-  _iterator2.e(err);
+  _iterator3.e(err);
 } finally {
-  _iterator2.f();
+  _iterator3.f();
 }
 
 var washingtonContainer = document.querySelector('.washington-overlay');
