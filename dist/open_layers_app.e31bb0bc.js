@@ -103942,8 +103942,8 @@ function getWashingtonHeaders() {
 
 function loadWashingtonTable() {
   try {
-    fetch("https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson").then(function (resp) {
-      return resp.json();
+    fetch("https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson").then(function (response) {
+      return response.json();
     }).then(function (data) {
       var table = document.getElementById('data-table');
       var html = getWashingtonHeaders();
@@ -104012,70 +104012,102 @@ function updateWashingtonTable() {
   }
 
   table.innerHTML = html;
-} // Обработка нажатия на строку таблицы
-
-
-(0, _jquery.default)("body").on("click", "#data-table tr", function () {
-  var checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
-  var currentRow = (0, _jquery.default)(this).closest("tr");
-
-  if (checkButtons[1].checked === true) {
-    var lon = currentRow.find("td:eq(2)").text();
-    var lat = currentRow.find("td:eq(3)").text();
-  } else if (checkButtons[2].checked === true) {
-    var lat = currentRow.find("td:eq(6)").text();
-    var lon = currentRow.find("td:eq(7)").text();
-  }
-
-  var point = (0, _proj.fromLonLat)([lon, lat]);
-  flyTo(point, function () {});
-});
-document.addEventListener('keyup', onFilterChanged);
-
-function onFilterChanged() {
-  var filter = document.getElementById('filter-field');
-  var filterText = filter.value;
-  var checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
-
-  if (checkButtons[1].checked === true) {
-    localStorage.setItem('washingtonFilterText', filterText);
-    updateWashingtonTable();
-  } else if (checkButtons[2].checked === true) {// Edit 2nd data
-  }
 }
+
+var moscowHeaders;
 
 function loadMoscowTable() {
   try {
-    var response = fetch('https://raw.githubusercontent.com/nextgis/metro4all/master/data/msk/portals.csv').then(function (response) {
+    fetch('https://raw.githubusercontent.com/nextgis/metro4all/master/data/msk/portals.csv').then(function (response) {
       return response.text();
     }).then(function (v) {
       return Papa.parse(v);
-    }).catch(function (err) {
-      return console.log(err);
-    });
-    response.then(function (v) {
-      var myTab = document.getElementById('data-table');
+    }).then(function (v) {
+      moscowHeaders = [];
+      var table = document.getElementById('data-table');
       var html = '';
+      var filterText;
+      localStorage.getItem('moscowFilterText') === null ? filterText = '' : filterText = localStorage.getItem('moscowFilterText');
+      html += '<tr>';
 
-      for (var k = 0; k < v.data[0].length; k++) {
-        html += "<th>".concat(v.data[0][k], "</th>");
+      for (var i = 0; i < v.data[0].length; i++) {
+        html += "<th>".concat(v.data[0][i], "</th>");
+        moscowHeaders.push(v.data[0][i]);
       }
 
-      for (var i = 1; i < v.data.length - 1; i++) {
-        html += '<tr class="tab-row">';
+      html += '</tr>';
 
-        for (var j = 0; j < v.data[i].length; j++) {
-          html += "<td>".concat(v.data[i][j], "</td>");
+      for (var _i = 1; _i < v.data.length - 1; _i++) {
+        var name = v.data[_i][2];
+
+        if (name.includes(filterText)) {
+          html += '<tr class="tab-row">';
+
+          for (var j = 0; j < v.data[_i].length; j++) {
+            html += "<td>".concat(v.data[_i][j], "</td>");
+          }
+
+          html += '</tr>';
         }
-
-        html += '</tr>';
       }
 
-      myTab.innerHTML = html;
+      table.innerHTML = html;
     });
   } catch (error) {
     console.error(error);
   }
+}
+
+function updateMoscowTable() {
+  var table = document.getElementById('data-table');
+  var html = '';
+  var source = moscowLayer.getSource();
+  var features = source.getFeatures();
+  var filterText;
+  localStorage.getItem('moscowFilterText') === null ? filterText = '' : filterText = localStorage.getItem('moscowFilterText');
+  html += '<tr>';
+
+  var _iterator3 = _createForOfIteratorHelper(moscowHeaders),
+      _step3;
+
+  try {
+    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+      var header = _step3.value;
+      html += "<th>".concat(header, "</th>");
+    }
+  } catch (err) {
+    _iterator3.e(err);
+  } finally {
+    _iterator3.f();
+  }
+
+  html += '</tr>';
+
+  var _iterator4 = _createForOfIteratorHelper(features),
+      _step4;
+
+  try {
+    for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+      var feature = _step4.value;
+      var name = feature.get('name_ru');
+
+      if (name.includes(filterText)) {
+        html += '<tr class="tab-row">';
+
+        for (var i = 0; i < moscowHeaders.length; i++) {
+          html += "<td>".concat(feature.get(moscowHeaders[i]), "</td>");
+        }
+
+        html += '</tr>';
+      }
+    }
+  } catch (err) {
+    _iterator4.e(err);
+  } finally {
+    _iterator4.f();
+  }
+
+  table.innerHTML = html;
 }
 
 function hideTable() {
@@ -104129,8 +104161,40 @@ function loadMoscowMarkers() {
   } catch (error) {
     console.error(error);
   }
-} // Загрузка состояния текущей позиции
+}
 
+document.addEventListener('keyup', onFilterChanged);
+
+function onFilterChanged() {
+  var filter = document.getElementById('filter-field');
+  var filterText = filter.value;
+  var checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
+
+  if (checkButtons[1].checked === true) {
+    localStorage.setItem('washingtonFilterText', filterText);
+    updateWashingtonTable();
+  } else if (checkButtons[2].checked === true) {
+    localStorage.setItem('moscowFilterText', filterText);
+    updateMoscowTable();
+  }
+} // Обработка нажатия на строку таблицы
+
+
+(0, _jquery.default)("body").on("click", "#data-table tr", function () {
+  var checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
+  var currentRow = (0, _jquery.default)(this).closest("tr");
+
+  if (checkButtons[1].checked === true) {
+    var lon = currentRow.find("td:eq(2)").text();
+    var lat = currentRow.find("td:eq(3)").text();
+  } else if (checkButtons[2].checked === true) {
+    var lat = currentRow.find("td:eq(6)").text();
+    var lon = currentRow.find("td:eq(7)").text();
+  }
+
+  var point = (0, _proj.fromLonLat)([lon, lat]);
+  flyTo(point, function () {});
+}); // Загрузка состояния текущей позиции
 
 var myView = new _View.default({});
 var currentCenter = localStorage.getItem('currentCenter');
@@ -104233,6 +104297,7 @@ if (currentLayerTitle != null) {
   var tableContainer = document.getElementById('table-container');
   var filter = document.getElementById('filter-field');
   var myMap = document.getElementById('map');
+  var filterText;
 
   switch (currentLayerTitle) {
     case BASE_LAYER_TITLE:
@@ -104245,7 +104310,6 @@ if (currentLayerTitle != null) {
     case WASHINGTON_LAYER_TITLE:
       baseLayerElements[1].checked = true;
       tableContainer.style.display = 'block';
-      var filterText;
       localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText');
       filter.value = filterText;
       loadWashingtonTable();
@@ -104256,6 +104320,8 @@ if (currentLayerTitle != null) {
     case MOSCOW_LAYER_TITLE:
       baseLayerElements[2].checked = true;
       tableContainer.style.display = 'block';
+      localStorage.getItem('moscowFilterText') === null ? filterText = '' : filterText = localStorage.getItem('moscowFilterText');
+      filter.value = filterText;
       loadMoscowTable();
       loadMoscowMarkers();
       myMap.style.height = '60vh';
@@ -104272,12 +104338,12 @@ if (currentLayerTitle != null) {
 
 var layerRadioButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
 
-var _iterator3 = _createForOfIteratorHelper(layerRadioButtons),
-    _step3;
+var _iterator5 = _createForOfIteratorHelper(layerRadioButtons),
+    _step5;
 
 try {
-  for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-    var layerRadioButton = _step3.value;
+  for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+    var layerRadioButton = _step5.value;
     layerRadioButton.addEventListener('change', function () {
       var chosenLayerTitle = this.value;
       localStorage.setItem('currentLayerTitle', chosenLayerTitle);
@@ -104285,15 +104351,17 @@ try {
         var layerTitle = element.get('title');
         element.setVisible(layerTitle === chosenLayerTitle);
       });
+      var filter = document.getElementById('filter-field');
       var tableContainer = document.getElementById('table-container');
       var myMap = document.getElementById('map');
+      var filterText;
 
       switch (chosenLayerTitle) {
         case BASE_LAYER_TITLE:
           hideTable();
           tableContainer.style.display = 'none';
           myMap.style.height = '100vh';
-          map.updateSize();
+          filter.value = '';
           break;
 
         case WASHINGTON_LAYER_TITLE:
@@ -104301,7 +104369,8 @@ try {
           moscowOverlay.setPosition(undefined);
           tableContainer.style.display = 'block';
           myMap.style.height = '60vh';
-          map.updateSize();
+          localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText');
+          filter.value = filterText;
           break;
 
         case MOSCOW_LAYER_TITLE:
@@ -104310,15 +104379,18 @@ try {
           washingtonOverlay.setPosition(undefined);
           tableContainer.style.display = 'block';
           myMap.style.height = '60vh';
-          map.updateSize();
+          localStorage.getItem('moscowFilterText') === null ? filterText = '' : filterText = localStorage.getItem('moscowFilterText');
+          filter.value = filterText;
           break;
       }
+
+      map.updateSize();
     });
   }
 } catch (err) {
-  _iterator3.e(err);
+  _iterator5.e(err);
 } finally {
-  _iterator3.f();
+  _iterator5.f();
 }
 
 var washingtonContainer = document.querySelector('.washington-overlay');
