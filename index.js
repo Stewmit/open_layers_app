@@ -154,9 +154,9 @@ function updateMoscowTable() {
     
     for (let feature of features) {
         
-        let name = feature.get('name_ru')
+        let name_ru = feature.get('name_ru')
 
-        if (name.includes(filterText)) {
+        if (name_ru.includes(filterText)) {
             html += '<tr class="tab-row">'
             for (let i = 0; i < moscowHeaders.length; i++) {
                 html += `<td>${feature.get(moscowHeaders[i])}</td>`
@@ -172,6 +172,27 @@ function hideTable() {
     document.getElementById('data-table').innerHTML = ''
 }
 
+function updateWashingtonMarkers() {
+
+    let source = washingtonLayer.getSource()
+    let features = source.getFeatures()
+
+    let filterText
+    localStorage.getItem('washingtonFilterText') === null ? filterText = '' : 
+        filterText = localStorage.getItem('washingtonFilterText')
+
+    for (let feature of features) {
+        let name = feature.get('name')
+
+        if (name.includes(filterText)) {
+            feature.setStyle(markerStyle)
+        }
+        else {
+            feature.setStyle(emptyStyle)
+        }
+    }
+}
+
 function loadMoscowMarkers() {
     try {
         var markerList = []
@@ -184,11 +205,8 @@ function loadMoscowMarkers() {
         response.then(v => {
 
             var latCol, lonCol
-            var headers = []
 
             for (let h = 0; h < v.data[0].length; h++) {
-
-                headers.push(v.data[0][h])
 
                 if (v.data[0][h] == 'lat') {
                     latCol = h
@@ -209,8 +227,8 @@ function loadMoscowMarkers() {
                     geometry: coords
                 }
 
-                for (let j = 0; j < v.data[i].length; j++) {
-                    point[headers[j]] = v.data[i][j]
+                for (let j = 0; j < moscowHeaders.length; j++) {
+                    point[moscowHeaders[j]] = v.data[i][j]
                 }
 
                 var marker = new Feature(point)
@@ -227,7 +245,27 @@ function loadMoscowMarkers() {
     }
 }
 
-document.addEventListener('keyup', onFilterChanged)
+function updateMoscowMarkers() {
+
+    let source = moscowLayer.getSource()
+    let features = source.getFeatures()
+
+    let filterText
+    localStorage.getItem('moscowFilterText') === null ? filterText = '' : 
+        filterText = localStorage.getItem('moscowFilterText')
+
+    for (let feature of features) {
+        let name = feature.get('name_ru')
+
+        if (name.includes(filterText)) {
+            feature.setStyle(markerStyle)
+        }
+        else {
+            feature.setStyle(emptyStyle)
+        }
+    }
+}
+
 function onFilterChanged() {
 
     var filter = document.getElementById('filter-field')
@@ -238,14 +276,16 @@ function onFilterChanged() {
     if (checkButtons[1].checked === true) {
         localStorage.setItem('washingtonFilterText', filterText)
         updateWashingtonTable()
+        updateWashingtonMarkers()
     }
     else if (checkButtons[2].checked === true) {
         localStorage.setItem('moscowFilterText', filterText)
         updateMoscowTable()
+        updateMoscowMarkers()
     }
 }
 
-// Обработка нажатия на строку таблицы
+// Handling clicks on a table row
 $("body").on("click", "#data-table tr", function () {
     
     const checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]')
@@ -266,7 +306,10 @@ $("body").on("click", "#data-table tr", function () {
     flyTo(point, function () {})
 })
 
-// Загрузка состояния текущей позиции
+const filter = document.getElementById('filter-field')
+filter.addEventListener('input', onFilterChanged)
+
+// Load current position state
 var myView = new View({})
 const currentCenter = localStorage.getItem('currentCenter')
 const currentZoom = localStorage.getItem('currentZoom')
@@ -280,7 +323,7 @@ else {
     myView.setZoom(currentZoom)
 }
 
-// Сохранение текущей позиции
+// Save current position
 myView.on('change:center', function() { 
     let center = myView.getCenter()
     let zoom = myView.getZoom()
@@ -343,6 +386,8 @@ const markerStyle = new Style({
     })
 })
 
+const emptyStyle = new Style()
+
 const baseLayer = new Tile({
     source: new OSM(),
     visible: true,
@@ -374,7 +419,7 @@ const layersGroup = new Group({
 })
 map.addLayer(layersGroup)
 
-// Загрузка состояния текущего слоя
+// Loading the state of the current layer
 var currentLayerTitle = localStorage.getItem('currentLayerTitle')
 if (currentLayerTitle != null) {
 
@@ -422,7 +467,7 @@ if (currentLayerTitle != null) {
     })
 }
 
-// Переключение между слоями
+// Switching layers
 const layerRadioButtons = document.querySelectorAll('.layer-bar > input[type=radio]')
 
 for (let layerRadioButton of layerRadioButtons) {
