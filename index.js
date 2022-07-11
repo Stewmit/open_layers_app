@@ -296,19 +296,31 @@ var currentLayerTitle = localStorage.getItem('currentLayerTitle')
 if (currentLayerTitle != null) {
 
     const baseLayerElements = document.querySelectorAll('.layer-bar > input[type=radio]')
+
+    let tableContainer = document.getElementById('table-container')
+    let myMap = document.getElementById('map')
     
     switch (currentLayerTitle) {
         case BASE_LAYER_TITLE:
             baseLayerElements[0].checked = true;
+            tableContainer.style.display = 'none'
+            myMap.style.height = '100vh'
+            map.updateSize()
             break
         case WASHINGTON_LAYER_TITLE:
             baseLayerElements[1].checked = true;
+            tableContainer.style.display = 'block'
             loadWashingtonTable()
+            myMap.style.height = '60vh'
+            map.updateSize()
             break
         case MOSCOW_LAYER_TITLE:
             baseLayerElements[2].checked = true;
+            tableContainer.style.display = 'block'
             loadMoscowTable()
             loadMoscowMarkers()
+            myMap.style.height = '60vh'
+            map.updateSize()
             break;
     }
 
@@ -333,18 +345,30 @@ for (let layerRadioButton of layerRadioButtons) {
             element.setVisible(layerTitle === chosenLayerTitle)
         })
 
+        let tableContainer = document.getElementById('table-container')
+        let myMap = document.getElementById('map')
+
         switch (chosenLayerTitle) {
             case BASE_LAYER_TITLE:
                 hideTable()
+                tableContainer.style.display = 'none'
+                myMap.style.height = '100vh'
+                map.updateSize()
                 break
             case WASHINGTON_LAYER_TITLE:
                 loadWashingtonTable()
                 moscowOverlay.setPosition(undefined)
+                tableContainer.style.display = 'block'
+                myMap.style.height = '60vh'
+                map.updateSize()
                 break
             case MOSCOW_LAYER_TITLE:
                 loadMoscowTable()
                 loadMoscowMarkers()
                 washingtonOverlay.setPosition(undefined)
+                tableContainer.style.display = 'block'
+                myMap.style.height = '60vh'
+                map.updateSize()
                 break;
         }
     })
