@@ -1,7 +1,7 @@
 import 'ol/ol.css';
 import Tile from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat } from 'ol/proj';
 import { Group } from 'ol/layer';
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -14,7 +14,6 @@ import { Overlay } from 'ol';
 import $ from "jquery";
 import { Feature } from 'ol/index';
 import {Point} from 'ol/geom';
-import { xhr } from 'ol/featureloader';
 
 
 const BASE_LAYER_TITLE = 'baseLayer'
@@ -105,7 +104,7 @@ function loadMoscowTable() {
             }
 
             for (let i = 1; i < v.data.length - 1; i++) {
-                html += '<tr>'
+                html += '<tr class="tab-row">'
                 for (let j = 0; j < v.data[i].length; j++) {
                     html += `<td>${v.data[i][j]}</td>`
                 }
@@ -136,23 +135,36 @@ function loadMoscowMarkers() {
         response.then(v => {
 
             var latCol, lonCol
+            var headers = []
 
-            for (let k = 0; k < v.data[0].length; k++) {
-                if (v.data[0][k] == 'lat') {
-                    latCol = k
+            for (let h = 0; h < v.data[0].length; h++) {
+
+                headers.push(v.data[0][h])
+
+                if (v.data[0][h] == 'lat') {
+                    latCol = h
                 }
-                else if (v.data[0][k] == 'lon') {
-                    lonCol = k
+                else if (v.data[0][h] == 'lon') {
+                    lonCol = h
                 }
             }
 
             for (let i = 1; i < v.data.length - 1; i++) {
+
                 let lat = v.data[i][latCol]
                 let lon = v.data[i][lonCol]
                 
-                var point = new Point(fromLonLat([lon, lat]))
-                var marker = new Feature(point)
+                var coords = new Point(fromLonLat([lon, lat]))
+                
+                const point = {
+                    geometry: coords
+                }
 
+                for (let j = 0; j < v.data[i].length; j++) {
+                    point[headers[j]] = v.data[i][j]
+                }
+
+                var marker = new Feature(point)
                 markerList.push(marker)
             }
 
@@ -229,6 +241,7 @@ const map = new Map({
             source: new OSM(),
         })
     ],
+    controls: [],
     target: 'map',
     view: myView
 });
@@ -326,39 +339,85 @@ for (let layerRadioButton of layerRadioButtons) {
                 break
             case WASHINGTON_LAYER_TITLE:
                 loadWashingtonTable()
+                moscowOverlay.setPosition(undefined)
                 break
             case MOSCOW_LAYER_TITLE:
                 loadMoscowTable()
                 loadMoscowMarkers()
+                washingtonOverlay.setPosition(undefined)
                 break;
         }
     })
 }
 
-// Всплывающее окно
-const overlayContainerElement = document.querySelector('.overlay-container')
-const overlayLayer = new Overlay({
-    element: overlayContainerElement
+const washingtonContainer = document.querySelector('.washington-overlay')
+const washingtonOverlay = new Overlay({
+    element: washingtonContainer
 });
-map.addOverlay(overlayLayer)
 
-// Обработка нажатия на маркер 2-ого слоя
-const overlayFeatureName = document.getElementById('feature-name')
-const overlayFeatureAddress = document.getElementById('feature-address')
+const moscowContainer = document.querySelector('.moscow-overlay')
+const moscowOverlay = new Overlay({
+    element: moscowContainer
+});
 
+map.addOverlay(washingtonOverlay)
+map.addOverlay(moscowOverlay)
+
+const nameField = document.getElementById('feature-name')
+const addressField = document.getElementById('feature-address')
+const lonField = document.getElementById('feature-lon')
+const latField = document.getElementById('feature-lat')
+
+// Washington overlay
 map.on('click', function (e) {
     let clickedCoordinate = e.coordinate
     map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
-        overlayLayer.setPosition(undefined)
+        
+        washingtonOverlay.setPosition(undefined)
+
         let clickedFeatureName = feature.get('name')
         let clickedFeatureAddress = feature.get('address')
-        overlayLayer.setPosition(clickedCoordinate)
-        overlayFeatureName.innerHTML = clickedFeatureName
-        overlayFeatureAddress.innerHTML = clickedFeatureAddress
+        let lonLat = toLonLat(feature.getGeometry().getCoordinates())
+        let clickedLon = 'lon: ' + lonLat[0].toFixed(6)
+        let clickedLat = 'lat: ' + lonLat[1].toFixed(6)
+
+        washingtonOverlay.setPosition(clickedCoordinate)
+
+        nameField.innerHTML = clickedFeatureName
+        addressField.innerHTML = clickedFeatureAddress
+        lonField.innerHTML = clickedLon
+        latField.innerHTML = clickedLat
     },
     {
         layerFilter: function (layerCandidate) {
             return layerCandidate.get('title') === WASHINGTON_LAYER_TITLE
         }
     })
+});
+
+// Moscow overlay
+map.on('click', function (e) {
+    let clickedCoordinate = e.coordinate
+    map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
+
+        const id_entrance = document.getElementById('id-entrance')
+        const meetcode = document.getElementById('meetcode')
+        const name_ru = document.getElementById('name_ru')
+
+        moscowOverlay.setPosition(clickedCoordinate)
+
+        id_entrance.innerHTML = feature.get('id_entrance')
+        meetcode.innerHTML = feature.get('meetcode')
+        name_ru.innerHTML = feature.get('name_ru')
+    },
+    {
+        layerFilter: function (layerCandidate) {
+            return layerCandidate.get('title') === MOSCOW_LAYER_TITLE
+        }
+    })
+});
+
+map.on('moveend', function (e) {
+    washingtonOverlay.setPosition(undefined)
+    moscowOverlay.setPosition(undefined)
 });

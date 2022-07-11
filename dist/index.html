@@ -20,13 +20,24 @@
       <input type="text" autocomplete="off" class="filter-field" id="filter-field" name="filter-field">
     </div>
     <div id="map" class="map"></div>
-    <div class="overlay-container">
-      <span class="overlay-text" id="feature-name"></span><br>
-      <span class="overlay-text" id="feature-address"></span><br>
+
+    <div class="washington-overlay">
+      <b><span class="overlay-text" id="feature-name"></span></b>
+      <span class="overlay-text" id="feature-address"></span>
+      <span class="overlay-text" id="feature-lon"></span>
+      <span class="overlay-text" id="feature-lat"></span>
     </div>
-      <div class="table-container">
-        <table id="data-tab" class="table table-striped table-bordered table-sm table-hover"></table>
-      </div>
+
+    <div class="moscow-overlay">
+      <b><span class="overlay-text" id="id-entrance"></span></b>
+      <span class="overlay-text" id="meetcode"></span>
+      <span class="overlay-text" id="name_ru"></span>
+    </div>
+
+    <div class="table-container">
+      <table id="data-tab" class="table table-striped table-bordered table-sm table-hover"></table>
+    </div>
+
     <script src="/open_layers_app.e31bb0bc.js"></script>
   </body>
 </html>

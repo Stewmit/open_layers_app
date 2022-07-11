@@ -103917,8 +103917,6 @@ var _index = require("ol/index");
 
 var _geom = require("ol/geom");
 
-var _featureloader = require("ol/featureloader");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
@@ -104003,7 +104001,7 @@ function loadMoscowTable() {
       }
 
       for (var i = 1; i < v.data.length - 1; i++) {
-        html += '<tr>';
+        html += '<tr class="tab-row">';
 
         for (var j = 0; j < v.data[i].length; j++) {
           html += "<td>".concat(v.data[i][j], "</td>");
@@ -104035,19 +104033,30 @@ function loadMoscowMarkers() {
     });
     response.then(function (v) {
       var latCol, lonCol;
+      var headers = [];
 
-      for (var k = 0; k < v.data[0].length; k++) {
-        if (v.data[0][k] == 'lat') {
-          latCol = k;
-        } else if (v.data[0][k] == 'lon') {
-          lonCol = k;
+      for (var h = 0; h < v.data[0].length; h++) {
+        headers.push(v.data[0][h]);
+
+        if (v.data[0][h] == 'lat') {
+          latCol = h;
+        } else if (v.data[0][h] == 'lon') {
+          lonCol = h;
         }
       }
 
       for (var i = 1; i < v.data.length - 1; i++) {
         var lat = v.data[i][latCol];
         var lon = v.data[i][lonCol];
-        var point = new _geom.Point((0, _proj.fromLonLat)([lon, lat]));
+        var coords = new _geom.Point((0, _proj.fromLonLat)([lon, lat]));
+        var point = {
+          geometry: coords
+        };
+
+        for (var j = 0; j < v.data[i].length; j++) {
+          point[headers[j]] = v.data[i][j];
+        }
+
         var marker = new _index.Feature(point);
         markerList.push(marker);
       }
@@ -104120,6 +104129,7 @@ var map = new _Map.default({
   layers: [new _Tile.default({
     source: new _OSM.default()
   })],
+  controls: [],
   target: 'map',
   view: myView
 });
@@ -104213,46 +104223,80 @@ try {
 
         case WASHINGTON_LAYER_TITLE:
           loadWashingtonTable();
+          moscowOverlay.setPosition(undefined);
           break;
 
         case MOSCOW_LAYER_TITLE:
           loadMoscowTable();
           loadMoscowMarkers();
+          washingtonOverlay.setPosition(undefined);
           break;
       }
     });
-  } // Всплывающее окно
-
+  }
 } catch (err) {
   _iterator.e(err);
 } finally {
   _iterator.f();
 }
 
-var overlayContainerElement = document.querySelector('.overlay-container');
-var overlayLayer = new _ol2.Overlay({
-  element: overlayContainerElement
+var washingtonContainer = document.querySelector('.washington-overlay');
+var washingtonOverlay = new _ol2.Overlay({
+  element: washingtonContainer
 });
-map.addOverlay(overlayLayer); // Обработка нажатия на маркер 2-ого слоя
+var moscowContainer = document.querySelector('.moscow-overlay');
+var moscowOverlay = new _ol2.Overlay({
+  element: moscowContainer
+});
+map.addOverlay(washingtonOverlay);
+map.addOverlay(moscowOverlay);
+var nameField = document.getElementById('feature-name');
+var addressField = document.getElementById('feature-address');
+var lonField = document.getElementById('feature-lon');
+var latField = document.getElementById('feature-lat'); // Washington overlay
 
-var overlayFeatureName = document.getElementById('feature-name');
-var overlayFeatureAddress = document.getElementById('feature-address');
 map.on('click', function (e) {
   var clickedCoordinate = e.coordinate;
   map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
-    overlayLayer.setPosition(undefined);
+    washingtonOverlay.setPosition(undefined);
     var clickedFeatureName = feature.get('name');
     var clickedFeatureAddress = feature.get('address');
-    overlayLayer.setPosition(clickedCoordinate);
-    overlayFeatureName.innerHTML = clickedFeatureName;
-    overlayFeatureAddress.innerHTML = clickedFeatureAddress;
+    var lonLat = (0, _proj.toLonLat)(feature.getGeometry().getCoordinates());
+    var clickedLon = 'lon: ' + lonLat[0].toFixed(6);
+    var clickedLat = 'lat: ' + lonLat[1].toFixed(6);
+    washingtonOverlay.setPosition(clickedCoordinate);
+    nameField.innerHTML = clickedFeatureName;
+    addressField.innerHTML = clickedFeatureAddress;
+    lonField.innerHTML = clickedLon;
+    latField.innerHTML = clickedLat;
   }, {
     layerFilter: function layerFilter(layerCandidate) {
       return layerCandidate.get('title') === WASHINGTON_LAYER_TITLE;
     }
   });
+}); // Moscow overlay
+
+map.on('click', function (e) {
+  var clickedCoordinate = e.coordinate;
+  map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
+    var id_entrance = document.getElementById('id-entrance');
+    var meetcode = document.getElementById('meetcode');
+    var name_ru = document.getElementById('name_ru');
+    moscowOverlay.setPosition(clickedCoordinate);
+    id_entrance.innerHTML = feature.get('id_entrance');
+    meetcode.innerHTML = feature.get('meetcode');
+    name_ru.innerHTML = feature.get('name_ru');
+  }, {
+    layerFilter: function layerFilter(layerCandidate) {
+      return layerCandidate.get('title') === MOSCOW_LAYER_TITLE;
+    }
+  });
 });
-},{"ol/ol.css":"node_modules/ol/ol.css","ol/layer/Tile":"node_modules/ol/layer/Tile.js","ol/source/OSM":"node_modules/ol/source/OSM.js","ol/proj":"node_modules/ol/proj.js","ol/layer":"node_modules/ol/layer.js","ol/Map":"node_modules/ol/Map.js","ol/View":"node_modules/ol/View.js","ol/style/Style":"node_modules/ol/style/Style.js","ol/layer/Vector":"node_modules/ol/layer/Vector.js","ol/source/Vector":"node_modules/ol/source/Vector.js","ol/style/Icon":"node_modules/ol/style/Icon.js","ol/format/GeoJSON":"node_modules/ol/format/GeoJSON.js","ol":"node_modules/ol/index.js","jquery":"node_modules/jquery/dist/jquery.js","ol/index":"node_modules/ol/index.js","ol/geom":"node_modules/ol/geom.js","ol/featureloader":"node_modules/ol/featureloader.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+map.on('moveend', function (e) {
+  washingtonOverlay.setPosition(undefined);
+  moscowOverlay.setPosition(undefined);
+});
+},{"ol/ol.css":"node_modules/ol/ol.css","ol/layer/Tile":"node_modules/ol/layer/Tile.js","ol/source/OSM":"node_modules/ol/source/OSM.js","ol/proj":"node_modules/ol/proj.js","ol/layer":"node_modules/ol/layer.js","ol/Map":"node_modules/ol/Map.js","ol/View":"node_modules/ol/View.js","ol/style/Style":"node_modules/ol/style/Style.js","ol/layer/Vector":"node_modules/ol/layer/Vector.js","ol/source/Vector":"node_modules/ol/source/Vector.js","ol/style/Icon":"node_modules/ol/style/Icon.js","ol/format/GeoJSON":"node_modules/ol/format/GeoJSON.js","ol":"node_modules/ol/index.js","jquery":"node_modules/jquery/dist/jquery.js","ol/index":"node_modules/ol/index.js","ol/geom":"node_modules/ol/geom.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -104280,7 +104324,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56254" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64082" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

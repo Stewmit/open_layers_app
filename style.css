@@ -78,13 +78,13 @@ body {
     outline: 1px solid #333;
 }
 
-.overlay-container {
+.washington-overlay {
     background-color: #fff;
-    width: 150px;
+    width: 170px;
     color: #000;
-    text-align: center;
+    text-align: left;
     border-radius: 10px;
-    padding: 2px 0;
+    padding: 10px;
     position: absolute;
     z-index: 1;
     bottom: 100%;
@@ -92,7 +92,32 @@ body {
     margin-left: -80px;
 }
 
-.overlay-container #feature-name::after {
+.washington-overlay #feature-name::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -10px;
+    border-width: 10px;
+    border-style: solid;
+    border-color: #fff transparent transparent transparent;
+}
+
+.moscow-overlay {
+    background-color: #fff;
+    width: 170px;
+    color: #000;
+    text-align: left;
+    border-radius: 10px;
+    padding: 10px;
+    position: absolute;
+    z-index: 1;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -80px;
+}
+
+.moscow-overlay #id-entrance::after {
     content: '';
     position: absolute;
     top: 100%;
@@ -111,4 +136,9 @@ body {
 
 .tab-row{
     cursor: pointer;
+}
+
+.overlay-text {
+    display: block;
+    font-size: 80%;
 }
