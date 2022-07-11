@@ -103950,6 +103950,51 @@ function onFilterChanged() {
   var filter = document.getElementById('filter-field');
   var text = filter.value;
   console.log(text);
+  localStorage.setItem('filterValue', text);
+  var checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
+  var myTab = document.getElementById('data-tab');
+  var html = '';
+
+  if (checkButtons[1].checked === true) {
+    html += '<tr>';
+    html += '<th>Название</th>';
+    html += '<th>Адрес</th>';
+    html += '<th>Долгота (lon)</th>';
+    html += '<th>Широта (lat)</th>';
+    html += '</tr>';
+    var source = washingtonLayer.getSource();
+    var features = source.getFeatures();
+    var emptyStyle = new _Style.default();
+
+    var _iterator = _createForOfIteratorHelper(features),
+        _step;
+
+    try {
+      for (_iterator.s(); !(_step = _iterator.n()).done;) {
+        var feature = _step.value;
+        var name = feature.get('name');
+
+        if (name.includes(text)) {
+          feature.setStyle(markerStyle);
+          html += '<tr>';
+          html += "<td>".concat(feature.get('name'), "</td>");
+          html += "<td>".concat(feature.get('address'), "</td>");
+          html += "<td>".concat((0, _proj.toLonLat)(feature.getGeometry().getCoordinates())[0], "</td>");
+          html += "<td>".concat((0, _proj.toLonLat)(feature.getGeometry().getCoordinates())[1], "</td>");
+          html += '</tr>';
+        } else {
+          feature.setStyle(emptyStyle);
+        }
+      }
+    } catch (err) {
+      _iterator.e(err);
+    } finally {
+      _iterator.f();
+    }
+  } else if (checkButtons[2].checked === true) {// Edit 2nd data
+  }
+
+  myTab.innerHTML = html;
 }
 
 function loadWashingtonTable() {
@@ -104133,6 +104178,14 @@ var map = new _Map.default({
   target: 'map',
   view: myView
 });
+var markerStyle = new _Style.default({
+  image: new _Icon.default({
+    anchor: [0.5, 46],
+    anchorXUnits: 'fraction',
+    anchorYUnits: 'pixels',
+    src: 'http://openlayers.org/en/latest/examples/data/icon.png'
+  })
+});
 var baseLayer = new _Tile.default({
   source: new _OSM.default(),
   visible: true,
@@ -104143,28 +104196,14 @@ var washingtonLayer = new _Vector.default({
     url: 'https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson',
     format: new _GeoJSON.default()
   }),
-  style: new _Style.default({
-    image: new _Icon.default({
-      anchor: [0.5, 46],
-      anchorXUnits: 'fraction',
-      anchorYUnits: 'pixels',
-      src: 'http://openlayers.org/en/latest/examples/data/icon.png'
-    })
-  }),
   visible: false,
+  style: markerStyle,
   title: WASHINGTON_LAYER_TITLE
 });
 var moscowLayer = new _Vector.default({
   visible: false,
-  title: MOSCOW_LAYER_TITLE,
-  style: new _Style.default({
-    image: new _Icon.default({
-      anchor: [0.5, 46],
-      anchorXUnits: 'fraction',
-      anchorYUnits: 'pixels',
-      src: 'http://openlayers.org/en/latest/examples/data/icon.png'
-    })
-  })
+  style: markerStyle,
+  title: MOSCOW_LAYER_TITLE
 });
 var layersGroup = new _layer.Group({
   layers: [baseLayer, washingtonLayer, moscowLayer]
@@ -104213,12 +104252,12 @@ if (currentLayerTitle != null) {
 
 var layerRadioButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
 
-var _iterator = _createForOfIteratorHelper(layerRadioButtons),
-    _step;
+var _iterator2 = _createForOfIteratorHelper(layerRadioButtons),
+    _step2;
 
 try {
-  for (_iterator.s(); !(_step = _iterator.n()).done;) {
-    var layerRadioButton = _step.value;
+  for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+    var layerRadioButton = _step2.value;
     layerRadioButton.addEventListener('change', function () {
       var chosenLayerTitle = this.value;
       localStorage.setItem('currentLayerTitle', chosenLayerTitle);
@@ -104257,9 +104296,9 @@ try {
     });
   }
 } catch (err) {
-  _iterator.e(err);
+  _iterator2.e(err);
 } finally {
-  _iterator.f();
+  _iterator2.f();
 }
 
 var washingtonContainer = document.querySelector('.washington-overlay');

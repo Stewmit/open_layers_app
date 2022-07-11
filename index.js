@@ -46,11 +46,54 @@ $("body").on("click", "#data-tab tr", function () {
 document.addEventListener('keyup', onFilterChanged)
 
 function onFilterChanged() {
+
     var filter = document.getElementById('filter-field')
 
     var text = filter.value
-
     console.log(text)
+
+    localStorage.setItem('filterValue', text)
+
+    const checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]')
+
+    let myTab = document.getElementById('data-tab')
+    let html = ''
+
+    if (checkButtons[1].checked === true) {
+
+        html += '<tr>'
+        html += '<th>Название</th>'
+        html += '<th>Адрес</th>'
+        html += '<th>Долгота (lon)</th>'
+        html += '<th>Широта (lat)</th>'
+        html += '</tr>'
+
+        let source = washingtonLayer.getSource()
+        let features = source.getFeatures()
+         
+        let emptyStyle = new Style()
+
+        for (let feature of features) {
+            let name = feature.get('name')
+            if (name.includes(text)) {
+                feature.setStyle(markerStyle)
+                html += '<tr>'
+                html += `<td>${feature.get('name')}</td>`
+                html += `<td>${feature.get('address')}</td>`
+                html += `<td>${toLonLat(feature.getGeometry().getCoordinates())[0]}</td>`
+                html += `<td>${toLonLat(feature.getGeometry().getCoordinates())[1]}</td>`
+                html += '</tr>'
+            }
+            else {
+                feature.setStyle(emptyStyle)
+            }
+        }
+    }
+    else if (checkButtons[2].checked === true) {
+        // Edit 2nd data
+    }
+
+    myTab.innerHTML = html
 }
 
 function loadWashingtonTable() {
@@ -246,6 +289,15 @@ const map = new Map({
     view: myView
 });
 
+const markerStyle = new Style({
+    image: new Icon({
+        anchor: [0.5, 46],
+        anchorXUnits: 'fraction',
+        anchorYUnits: 'pixels',
+        src: 'http://openlayers.org/en/latest/examples/data/icon.png'
+    })
+})
+
 const baseLayer = new Tile({
     source: new OSM(),
     visible: true,
@@ -257,29 +309,15 @@ var washingtonLayer = new VectorLayer({
         url: 'https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson',
         format: new GeoJSON()
     }),
-    style: new Style({
-        image: new Icon({
-            anchor: [0.5, 46],
-            anchorXUnits: 'fraction',
-            anchorYUnits: 'pixels',
-            src: 'http://openlayers.org/en/latest/examples/data/icon.png'
-        })
-    }),
     visible: false,
+    style: markerStyle,
     title: WASHINGTON_LAYER_TITLE
 });
 
 const moscowLayer = new VectorLayer({
     visible: false,
-    title: MOSCOW_LAYER_TITLE,
-    style: new Style({
-        image: new Icon({
-            anchor: [0.5, 46],
-            anchorXUnits: 'fraction',
-            anchorYUnits: 'pixels',
-            src: 'http://openlayers.org/en/latest/examples/data/icon.png'
-        })
-    }),
+    style: markerStyle,
+    title: MOSCOW_LAYER_TITLE
 });
 
 const layersGroup = new Group({
