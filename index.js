@@ -285,6 +285,50 @@ function onFilterChanged() {
     }
 }
 
+function getWashingtonLonLats() {
+
+    let source = washingtonLayer.getSource()
+    let features = source.getFeatures()
+
+    let lonLats = []
+
+    let filterText
+    localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText')
+
+    for (let feature of features) {
+        
+        let name = feature.get('name')
+
+        if (name.includes(filterText)) {
+            lonLats.push(feature.getGeometry().getCoordinates())
+        }
+    }
+
+    return lonLats
+}
+
+function getMoscowLonLats() {
+
+    let source = moscowLayer.getSource()
+    let features = source.getFeatures()
+
+    let lonLats = []
+
+    let filterText
+    localStorage.getItem('moscowFilterText') === null ? filterText = '' : filterText = localStorage.getItem('moscowFilterText')
+
+    for (let feature of features) {
+        
+        let name = feature.get('name_ru')
+
+        if (name.includes(filterText)) {
+            lonLats.push(feature.getGeometry().getCoordinates())
+        }
+    }
+
+    return lonLats
+}
+
 // Handling clicks on a table row
 $("body").on("click", "#data-table tr", function () {
     
@@ -364,6 +408,37 @@ function flyTo(location, done) {
       },
       callback
     );
+}
+
+function tour() {
+
+    const checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]')
+    var locations
+
+    if (checkButtons[1].checked === true) {
+        locations = getWashingtonLonLats()
+    }
+    else if (checkButtons[2].checked === true) {
+        locations = getMoscowLonLats()
+    }
+
+    let index = -1
+    function next(more) {
+      if (more) {
+        ++index
+        if (index < locations.length) {
+          const delay = index === 0 ? 0 : 750
+          setTimeout(function () {
+            flyTo(locations[index], next)
+          }, delay);
+        } else {
+          alert('Tour complete')
+        }
+      } else {
+        alert('Tour cancelled')
+      }
+    }
+    next(true);
 }
 
 const map = new Map({
@@ -568,15 +643,20 @@ map.on('click', function (e) {
     let clickedCoordinate = e.coordinate
     map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
 
-        const id_entrance = document.getElementById('id-entrance')
-        const meetcode = document.getElementById('meetcode')
         const name_ru = document.getElementById('name_ru')
+        const id_station = document.getElementById('id_station')
+        const direction = document.getElementById('direction')
+        const mos_lon = document.getElementById('m-lon')
+        const mos_lat = document.getElementById('m-lat')
+
+        name_ru.innerHTML = feature.get('name_ru')
+        id_station.innerHTML = 'station id: ' + feature.get('id_station')
+        direction.innerHTML = 'diresction: ' + feature.get('direction')
+
+        mos_lon.innerHTML = 'lon: ' + feature.get('lon')
+        mos_lat.innerHTML = 'lat: ' + feature.get('lat')
 
         moscowOverlay.setPosition(clickedCoordinate)
-
-        id_entrance.innerHTML = feature.get('id_entrance')
-        meetcode.innerHTML = feature.get('meetcode')
-        name_ru.innerHTML = feature.get('name_ru')
     },
     {
         layerFilter: function (layerCandidate) {
@@ -589,3 +669,5 @@ map.on('moveend', function (e) {
     washingtonOverlay.setPosition(undefined)
     moscowOverlay.setPosition(undefined)
 })
+
+document.getElementById('present').addEventListener('click', tour)

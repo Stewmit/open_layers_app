@@ -104228,6 +104228,62 @@ function onFilterChanged() {
     updateMoscowTable();
     updateMoscowMarkers();
   }
+}
+
+function getWashingtonLonLats() {
+  var source = washingtonLayer.getSource();
+  var features = source.getFeatures();
+  var lonLats = [];
+  var filterText;
+  localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText');
+
+  var _iterator7 = _createForOfIteratorHelper(features),
+      _step7;
+
+  try {
+    for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
+      var feature = _step7.value;
+      var name = feature.get('name');
+
+      if (name.includes(filterText)) {
+        lonLats.push(feature.getGeometry().getCoordinates());
+      }
+    }
+  } catch (err) {
+    _iterator7.e(err);
+  } finally {
+    _iterator7.f();
+  }
+
+  return lonLats;
+}
+
+function getMoscowLonLats() {
+  var source = moscowLayer.getSource();
+  var features = source.getFeatures();
+  var lonLats = [];
+  var filterText;
+  localStorage.getItem('moscowFilterText') === null ? filterText = '' : filterText = localStorage.getItem('moscowFilterText');
+
+  var _iterator8 = _createForOfIteratorHelper(features),
+      _step8;
+
+  try {
+    for (_iterator8.s(); !(_step8 = _iterator8.n()).done;) {
+      var feature = _step8.value;
+      var name = feature.get('name_ru');
+
+      if (name.includes(filterText)) {
+        lonLats.push(feature.getGeometry().getCoordinates());
+      }
+    }
+  } catch (err) {
+    _iterator8.e(err);
+  } finally {
+    _iterator8.f();
+  }
+
+  return lonLats;
 } // Handling clicks on a table row
 
 
@@ -104301,6 +104357,38 @@ function flyTo(location, done) {
     zoom: zoom,
     duration: duration / 2
   }, callback);
+}
+
+function tour() {
+  var checkButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
+  var locations;
+
+  if (checkButtons[1].checked === true) {
+    locations = getWashingtonLonLats();
+  } else if (checkButtons[2].checked === true) {
+    locations = getMoscowLonLats();
+  }
+
+  var index = -1;
+
+  function next(more) {
+    if (more) {
+      ++index;
+
+      if (index < locations.length) {
+        var delay = index === 0 ? 0 : 750;
+        setTimeout(function () {
+          flyTo(locations[index], next);
+        }, delay);
+      } else {
+        alert('Tour complete');
+      }
+    } else {
+      alert('Tour cancelled');
+    }
+  }
+
+  next(true);
 }
 
 var map = new _Map.default({
@@ -104394,12 +104482,12 @@ if (currentLayerTitle != null) {
 
 var layerRadioButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
 
-var _iterator7 = _createForOfIteratorHelper(layerRadioButtons),
-    _step7;
+var _iterator9 = _createForOfIteratorHelper(layerRadioButtons),
+    _step9;
 
 try {
-  for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
-    var layerRadioButton = _step7.value;
+  for (_iterator9.s(); !(_step9 = _iterator9.n()).done;) {
+    var layerRadioButton = _step9.value;
     layerRadioButton.addEventListener('change', function () {
       var chosenLayerTitle = this.value;
       localStorage.setItem('currentLayerTitle', chosenLayerTitle);
@@ -104444,9 +104532,9 @@ try {
     });
   }
 } catch (err) {
-  _iterator7.e(err);
+  _iterator9.e(err);
 } finally {
-  _iterator7.f();
+  _iterator9.f();
 }
 
 var washingtonContainer = document.querySelector('.washington-overlay');
@@ -104488,13 +104576,17 @@ map.on('click', function (e) {
 map.on('click', function (e) {
   var clickedCoordinate = e.coordinate;
   map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
-    var id_entrance = document.getElementById('id-entrance');
-    var meetcode = document.getElementById('meetcode');
     var name_ru = document.getElementById('name_ru');
-    moscowOverlay.setPosition(clickedCoordinate);
-    id_entrance.innerHTML = feature.get('id_entrance');
-    meetcode.innerHTML = feature.get('meetcode');
+    var id_station = document.getElementById('id_station');
+    var direction = document.getElementById('direction');
+    var mos_lon = document.getElementById('m-lon');
+    var mos_lat = document.getElementById('m-lat');
     name_ru.innerHTML = feature.get('name_ru');
+    id_station.innerHTML = 'station id: ' + feature.get('id_station');
+    direction.innerHTML = 'diresction: ' + feature.get('direction');
+    mos_lon.innerHTML = 'lon: ' + feature.get('lon');
+    mos_lat.innerHTML = 'lat: ' + feature.get('lat');
+    moscowOverlay.setPosition(clickedCoordinate);
   }, {
     layerFilter: function layerFilter(layerCandidate) {
       return layerCandidate.get('title') === MOSCOW_LAYER_TITLE;
@@ -104505,6 +104597,7 @@ map.on('moveend', function (e) {
   washingtonOverlay.setPosition(undefined);
   moscowOverlay.setPosition(undefined);
 });
+document.getElementById('present').addEventListener('click', tour);
 },{"ol/ol.css":"node_modules/ol/ol.css","ol/layer/Tile":"node_modules/ol/layer/Tile.js","ol/source/OSM":"node_modules/ol/source/OSM.js","ol/proj":"node_modules/ol/proj.js","ol/layer":"node_modules/ol/layer.js","ol/Map":"node_modules/ol/Map.js","ol/View":"node_modules/ol/View.js","ol/style/Style":"node_modules/ol/style/Style.js","ol/layer/Vector":"node_modules/ol/layer/Vector.js","ol/source/Vector":"node_modules/ol/source/Vector.js","ol/style/Icon":"node_modules/ol/style/Icon.js","ol/format/GeoJSON":"node_modules/ol/format/GeoJSON.js","ol":"node_modules/ol/index.js","jquery":"node_modules/jquery/dist/jquery.js","ol/index":"node_modules/ol/index.js","ol/geom":"node_modules/ol/geom.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';

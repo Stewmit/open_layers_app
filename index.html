@@ -11,7 +11,7 @@
   </head>
   <body>
     <div class="settings-panel">
-      <input class="present-btn" type="button" value="Present">
+      <input id="present" class="present-btn" type="button" value="Present">
       <div class="layer-bar">
         <input class="check" type="radio" name="layerRadioButton" value="baseLayer" checked>
         <input class="check" type="radio" name="layerRadioButton" value="washingtonLayer">
@@ -29,9 +29,11 @@
     </div>
 
     <div class="moscow-overlay">
-      <b><span class="overlay-text" id="id-entrance"></span></b>
-      <span class="overlay-text" id="meetcode"></span>
-      <span class="overlay-text" id="name_ru"></span>
+      <b><span class="overlay-text" id="name_ru"></span></b>
+      <span class="overlay-text" id="id_station"></span>
+      <span class="overlay-text" id="direction"></span>
+      <span class="overlay-text" id="m-lon"></span>
+      <span class="overlay-text" id="m-lat"></span>
     </div>
 
     <div class="table-container" id="table-container">
