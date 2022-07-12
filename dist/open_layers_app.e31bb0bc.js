@@ -103978,41 +103978,27 @@ function loadWashingtonTable() {
   } catch (error) {
     console.error(error);
   }
-}
+} // function updateWashingtonTable() {
+//     let table = document.getElementById('data-table')
+//     let html = getWashingtonHeaders()
+//     let source = washingtonLayer.getSource()
+//     let features = source.getFeatures()
+//     let filterText
+//     localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText')
+//     for (let feature of features) {
+//         let name = feature.get('name')
+//         if (name.includes(filterText)) {
+//             html += '<tr class="tab-row">'
+//             html += `<td>${feature.get('name')}</td>`
+//             html += `<td>${feature.get('address')}</td>`
+//             html += `<td>${toLonLat(feature.getGeometry().getCoordinates())[0]}</td>`
+//             html += `<td>${toLonLat(feature.getGeometry().getCoordinates())[1]}</td>`
+//             html += '</tr>'
+//         }
+//     }
+//     table.innerHTML = html
+// }
 
-function updateWashingtonTable() {
-  var table = document.getElementById('data-table');
-  var html = getWashingtonHeaders();
-  var source = washingtonLayer.getSource();
-  var features = source.getFeatures();
-  var filterText;
-  localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText');
-
-  var _iterator2 = _createForOfIteratorHelper(features),
-      _step2;
-
-  try {
-    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-      var feature = _step2.value;
-      var name = feature.get('name');
-
-      if (name.includes(filterText)) {
-        html += '<tr class="tab-row">';
-        html += "<td>".concat(feature.get('name'), "</td>");
-        html += "<td>".concat(feature.get('address'), "</td>");
-        html += "<td>".concat((0, _proj.toLonLat)(feature.getGeometry().getCoordinates())[0], "</td>");
-        html += "<td>".concat((0, _proj.toLonLat)(feature.getGeometry().getCoordinates())[1], "</td>");
-        html += '</tr>';
-      }
-    }
-  } catch (err) {
-    _iterator2.e(err);
-  } finally {
-    _iterator2.f();
-  }
-
-  table.innerHTML = html;
-}
 
 var moscowHeaders;
 
@@ -104056,90 +104042,94 @@ function loadMoscowTable() {
   } catch (error) {
     console.error(error);
   }
-}
+} // function updateMoscowTable() {
+//     let table = document.getElementById('data-table')
+//     let html = ''
+//     let source = moscowLayer.getSource()
+//     let features = source.getFeatures()
+//     let filterText
+//     localStorage.getItem('moscowFilterText') === null ? filterText = '' : filterText = localStorage.getItem('moscowFilterText')
+//     html += '<tr>'
+//     for (let header of moscowHeaders) {
+//         html += `<th>${header}</th>`
+//     }
+//     html += '</tr>'
+//     for (let feature of features) {
+//         let name_ru = feature.get('name_ru')
+//         if (name_ru.includes(filterText)) {
+//             html += '<tr class="tab-row">'
+//             for (let i = 0; i < moscowHeaders.length; i++) {
+//                 html += `<td>${feature.get(moscowHeaders[i])}</td>`
+//             }
+//             html += '</tr>'
+//         }   
+//     }
+//     table.innerHTML = html
+// }
 
-function updateMoscowTable() {
-  var table = document.getElementById('data-table');
-  var html = '';
-  var source = moscowLayer.getSource();
-  var features = source.getFeatures();
-  var filterText;
-  localStorage.getItem('moscowFilterText') === null ? filterText = '' : filterText = localStorage.getItem('moscowFilterText');
-  html += '<tr>';
-
-  var _iterator3 = _createForOfIteratorHelper(moscowHeaders),
-      _step3;
-
-  try {
-    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-      var header = _step3.value;
-      html += "<th>".concat(header, "</th>");
-    }
-  } catch (err) {
-    _iterator3.e(err);
-  } finally {
-    _iterator3.f();
-  }
-
-  html += '</tr>';
-
-  var _iterator4 = _createForOfIteratorHelper(features),
-      _step4;
-
-  try {
-    for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
-      var feature = _step4.value;
-      var name_ru = feature.get('name_ru');
-
-      if (name_ru.includes(filterText)) {
-        html += '<tr class="tab-row">';
-
-        for (var i = 0; i < moscowHeaders.length; i++) {
-          html += "<td>".concat(feature.get(moscowHeaders[i]), "</td>");
-        }
-
-        html += '</tr>';
-      }
-    }
-  } catch (err) {
-    _iterator4.e(err);
-  } finally {
-    _iterator4.f();
-  }
-
-  table.innerHTML = html;
-}
 
 function hideTable() {
   document.getElementById('data-table').innerHTML = '';
 }
 
-function updateWashingtonMarkers() {
-  var source = washingtonLayer.getSource();
-  var features = source.getFeatures();
-  var filterText;
-  localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText');
-
-  var _iterator5 = _createForOfIteratorHelper(features),
-      _step5;
-
+function loadWashingtonMarkers() {
   try {
-    for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
-      var feature = _step5.value;
-      var name = feature.get('name');
+    var markerList = [];
+    fetch("https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson").then(function (response) {
+      return response.json();
+    }).then(function (data) {
+      var filterText;
+      localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText');
 
-      if (name.includes(filterText)) {
-        feature.setStyle(markerStyle);
-      } else {
-        feature.setStyle(emptyStyle);
+      var _iterator2 = _createForOfIteratorHelper(data.features),
+          _step2;
+
+      try {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+          var feature = _step2.value;
+          var name = feature.properties.name;
+
+          if (name.includes(filterText)) {
+            var coords = new _geom.Point((0, _proj.fromLonLat)([feature.geometry.coordinates[0], feature.geometry.coordinates[1]]));
+            var point = {
+              geometry: coords
+            };
+            point['name'] = feature.properties.name;
+            point['address'] = feature.properties.address;
+            var marker = new _index.Feature(point);
+            markerList.push(marker);
+          }
+        }
+      } catch (err) {
+        _iterator2.e(err);
+      } finally {
+        _iterator2.f();
       }
-    }
-  } catch (err) {
-    _iterator5.e(err);
-  } finally {
-    _iterator5.f();
+
+      washingtonLayer.setSource(new _Vector2.default({
+        features: markerList
+      }));
+    });
+  } catch (error) {
+    console.error(error);
   }
-}
+} // function updateWashingtonMarkers() {
+//     let source = washingtonLayer.getSource()
+//     let features = source.getFeatures()
+//     let filterText
+//     localStorage.getItem('washingtonFilterText') === null ? filterText = '' : 
+//         filterText = localStorage.getItem('washingtonFilterText')
+//     for (let feature of features) {
+//         let name = feature.get('name')
+//         if (name.includes(filterText)) {
+//             feature.setStyle(markerStyle)
+//         }
+//         else {
+//             feature.setStyle(emptyStyle)
+//         }
+//     }
+// }
+
 
 function loadMoscowMarkers() {
   try {
@@ -104153,6 +104143,8 @@ function loadMoscowMarkers() {
     });
     response.then(function (v) {
       var latCol, lonCol;
+      var filterText;
+      localStorage.getItem('moscowFilterText') === null ? filterText = '' : filterText = localStorage.getItem('moscowFilterText');
 
       for (var h = 0; h < v.data[0].length; h++) {
         if (v.data[0][h] == 'lat') {
@@ -104163,19 +104155,21 @@ function loadMoscowMarkers() {
       }
 
       for (var i = 1; i < v.data.length - 1; i++) {
-        var lat = v.data[i][latCol];
-        var lon = v.data[i][lonCol];
-        var coords = new _geom.Point((0, _proj.fromLonLat)([lon, lat]));
-        var point = {
-          geometry: coords
-        };
+        if (v.data[i][2].includes(filterText)) {
+          var lat = v.data[i][latCol];
+          var lon = v.data[i][lonCol];
+          var coords = new _geom.Point((0, _proj.fromLonLat)([lon, lat]));
+          var point = {
+            geometry: coords
+          };
 
-        for (var j = 0; j < moscowHeaders.length; j++) {
-          point[moscowHeaders[j]] = v.data[i][j];
+          for (var j = 0; j < moscowHeaders.length; j++) {
+            point[moscowHeaders[j]] = v.data[i][j];
+          }
+
+          var marker = new _index.Feature(point);
+          markerList.push(marker);
         }
-
-        var marker = new _index.Feature(point);
-        markerList.push(marker);
       }
 
       moscowLayer.setSource(new _Vector2.default({
@@ -104185,34 +104179,23 @@ function loadMoscowMarkers() {
   } catch (error) {
     console.error(error);
   }
-}
+} // function updateMoscowMarkers() {
+//     let source = moscowLayer.getSource()
+//     let features = source.getFeatures()
+//     let filterText
+//     localStorage.getItem('moscowFilterText') === null ? filterText = '' : 
+//         filterText = localStorage.getItem('moscowFilterText')
+//     for (let feature of features) {
+//         let name = feature.get('name_ru')
+//         if (name.includes(filterText)) {
+//             feature.setStyle(markerStyle)
+//         }
+//         else {
+//             feature.setStyle(emptyStyle)
+//         }
+//     }
+// }
 
-function updateMoscowMarkers() {
-  var source = moscowLayer.getSource();
-  var features = source.getFeatures();
-  var filterText;
-  localStorage.getItem('moscowFilterText') === null ? filterText = '' : filterText = localStorage.getItem('moscowFilterText');
-
-  var _iterator6 = _createForOfIteratorHelper(features),
-      _step6;
-
-  try {
-    for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
-      var feature = _step6.value;
-      var name = feature.get('name_ru');
-
-      if (name.includes(filterText)) {
-        feature.setStyle(markerStyle);
-      } else {
-        feature.setStyle(emptyStyle);
-      }
-    }
-  } catch (err) {
-    _iterator6.e(err);
-  } finally {
-    _iterator6.f();
-  }
-}
 
 function onFilterChanged() {
   var filter = document.getElementById('filter-field');
@@ -104221,12 +104204,13 @@ function onFilterChanged() {
 
   if (checkButtons[1].checked === true) {
     localStorage.setItem('washingtonFilterText', filterText);
-    updateWashingtonTable();
-    updateWashingtonMarkers();
+    loadWashingtonTable(); // Fix update
+
+    loadWashingtonMarkers();
   } else if (checkButtons[2].checked === true) {
     localStorage.setItem('moscowFilterText', filterText);
-    updateMoscowTable();
-    updateMoscowMarkers();
+    loadMoscowTable();
+    loadMoscowMarkers();
   }
 }
 
@@ -104237,12 +104221,12 @@ function getWashingtonLonLats() {
   var filterText;
   localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText');
 
-  var _iterator7 = _createForOfIteratorHelper(features),
-      _step7;
+  var _iterator3 = _createForOfIteratorHelper(features),
+      _step3;
 
   try {
-    for (_iterator7.s(); !(_step7 = _iterator7.n()).done;) {
-      var feature = _step7.value;
+    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+      var feature = _step3.value;
       var name = feature.get('name');
 
       if (name.includes(filterText)) {
@@ -104250,9 +104234,9 @@ function getWashingtonLonLats() {
       }
     }
   } catch (err) {
-    _iterator7.e(err);
+    _iterator3.e(err);
   } finally {
-    _iterator7.f();
+    _iterator3.f();
   }
 
   return lonLats;
@@ -104265,12 +104249,12 @@ function getMoscowLonLats() {
   var filterText;
   localStorage.getItem('moscowFilterText') === null ? filterText = '' : filterText = localStorage.getItem('moscowFilterText');
 
-  var _iterator8 = _createForOfIteratorHelper(features),
-      _step8;
+  var _iterator4 = _createForOfIteratorHelper(features),
+      _step4;
 
   try {
-    for (_iterator8.s(); !(_step8 = _iterator8.n()).done;) {
-      var feature = _step8.value;
+    for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+      var feature = _step4.value;
       var name = feature.get('name_ru');
 
       if (name.includes(filterText)) {
@@ -104278,9 +104262,9 @@ function getMoscowLonLats() {
       }
     }
   } catch (err) {
-    _iterator8.e(err);
+    _iterator4.e(err);
   } finally {
-    _iterator8.f();
+    _iterator4.f();
   }
 
   return lonLats;
@@ -104378,7 +104362,12 @@ function tour() {
       if (index < locations.length) {
         var delay = index === 0 ? 0 : 750;
         setTimeout(function () {
-          flyTo(locations[index], next);
+          flyTo(locations[index], next); // if (checkButtons[1].checked === true) {
+          //     washingtonOverlay.setPosition(locations[index])
+          // }
+          // else if (checkButtons[2].checked === true) {
+          //     moscowOverlay.setPosition(locations[index])
+          // }
         }, delay);
       } else {
         alert('Tour complete');
@@ -104406,18 +104395,18 @@ var markerStyle = new _Style.default({
     anchorYUnits: 'pixels',
     src: 'http://openlayers.org/en/latest/examples/data/icon.png'
   })
-});
-var emptyStyle = new _Style.default();
+}); // const emptyStyle = new Style()
+
 var baseLayer = new _Tile.default({
   source: new _OSM.default(),
   visible: true,
   title: BASE_LAYER_TITLE
 });
 var washingtonLayer = new _Vector.default({
-  source: new _Vector2.default({
-    url: 'https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson',
-    format: new _GeoJSON.default()
-  }),
+  // source: new VectorSource({
+  //     url: 'https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson',
+  //     format: new GeoJSON()
+  // }),
   visible: false,
   style: markerStyle,
   title: WASHINGTON_LAYER_TITLE
@@ -104457,6 +104446,7 @@ if (currentLayerTitle != null) {
       localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText');
       _filter.value = filterText;
       loadWashingtonTable();
+      loadWashingtonMarkers();
       myMap.style.height = '60vh';
       map.updateSize();
       break;
@@ -104482,12 +104472,12 @@ if (currentLayerTitle != null) {
 
 var layerRadioButtons = document.querySelectorAll('.layer-bar > input[type=radio]');
 
-var _iterator9 = _createForOfIteratorHelper(layerRadioButtons),
-    _step9;
+var _iterator5 = _createForOfIteratorHelper(layerRadioButtons),
+    _step5;
 
 try {
-  for (_iterator9.s(); !(_step9 = _iterator9.n()).done;) {
-    var layerRadioButton = _step9.value;
+  for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+    var layerRadioButton = _step5.value;
     layerRadioButton.addEventListener('change', function () {
       var chosenLayerTitle = this.value;
       localStorage.setItem('currentLayerTitle', chosenLayerTitle);
@@ -104510,6 +104500,7 @@ try {
 
         case WASHINGTON_LAYER_TITLE:
           loadWashingtonTable();
+          loadWashingtonMarkers();
           moscowOverlay.setPosition(undefined);
           tableContainer.style.display = 'block';
           myMap.style.height = '60vh';
@@ -104532,9 +104523,9 @@ try {
     });
   }
 } catch (err) {
-  _iterator9.e(err);
+  _iterator5.e(err);
 } finally {
-  _iterator9.f();
+  _iterator5.f();
 }
 
 var washingtonContainer = document.querySelector('.washington-overlay');
@@ -104555,7 +104546,6 @@ var latField = document.getElementById('feature-lat'); // Washington overlay
 map.on('click', function (e) {
   var clickedCoordinate = e.coordinate;
   map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
-    washingtonOverlay.setPosition(undefined);
     var clickedFeatureName = feature.get('name');
     var clickedFeatureAddress = feature.get('address');
     var lonLat = (0, _proj.toLonLat)(feature.getGeometry().getCoordinates());
@@ -104626,7 +104616,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64082" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52165" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

@@ -63,33 +63,33 @@ function loadWashingtonTable() {
     }
 }
 
-function updateWashingtonTable() {
+// function updateWashingtonTable() {
     
-    let table = document.getElementById('data-table')
-    let html = getWashingtonHeaders()
+//     let table = document.getElementById('data-table')
+//     let html = getWashingtonHeaders()
 
-    let source = washingtonLayer.getSource()
-    let features = source.getFeatures()
+//     let source = washingtonLayer.getSource()
+//     let features = source.getFeatures()
 
-    let filterText
-    localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText')
+//     let filterText
+//     localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText')
 
-    for (let feature of features) {
+//     for (let feature of features) {
         
-        let name = feature.get('name')
+//         let name = feature.get('name')
 
-        if (name.includes(filterText)) {
-            html += '<tr class="tab-row">'
-            html += `<td>${feature.get('name')}</td>`
-            html += `<td>${feature.get('address')}</td>`
-            html += `<td>${toLonLat(feature.getGeometry().getCoordinates())[0]}</td>`
-            html += `<td>${toLonLat(feature.getGeometry().getCoordinates())[1]}</td>`
-            html += '</tr>'
-        }
-    }
+//         if (name.includes(filterText)) {
+//             html += '<tr class="tab-row">'
+//             html += `<td>${feature.get('name')}</td>`
+//             html += `<td>${feature.get('address')}</td>`
+//             html += `<td>${toLonLat(feature.getGeometry().getCoordinates())[0]}</td>`
+//             html += `<td>${toLonLat(feature.getGeometry().getCoordinates())[1]}</td>`
+//             html += '</tr>'
+//         }
+//     }
 
-    table.innerHTML = html
-}
+//     table.innerHTML = html
+// }
 
 var moscowHeaders
 
@@ -135,63 +135,104 @@ function loadMoscowTable() {
     }
 }
 
-function updateMoscowTable() {
+// function updateMoscowTable() {
     
-    let table = document.getElementById('data-table')
-    let html = ''
+//     let table = document.getElementById('data-table')
+//     let html = ''
 
-    let source = moscowLayer.getSource()
-    let features = source.getFeatures()
+//     let source = moscowLayer.getSource()
+//     let features = source.getFeatures()
 
-    let filterText
-    localStorage.getItem('moscowFilterText') === null ? filterText = '' : filterText = localStorage.getItem('moscowFilterText')
+//     let filterText
+//     localStorage.getItem('moscowFilterText') === null ? filterText = '' : filterText = localStorage.getItem('moscowFilterText')
 
-    html += '<tr>'
-    for (let header of moscowHeaders) {
-        html += `<th>${header}</th>`
-    }
-    html += '</tr>'
+//     html += '<tr>'
+//     for (let header of moscowHeaders) {
+//         html += `<th>${header}</th>`
+//     }
+//     html += '</tr>'
     
-    for (let feature of features) {
+//     for (let feature of features) {
         
-        let name_ru = feature.get('name_ru')
+//         let name_ru = feature.get('name_ru')
 
-        if (name_ru.includes(filterText)) {
-            html += '<tr class="tab-row">'
-            for (let i = 0; i < moscowHeaders.length; i++) {
-                html += `<td>${feature.get(moscowHeaders[i])}</td>`
-            }
-            html += '</tr>'
-        }   
-    }
+//         if (name_ru.includes(filterText)) {
+//             html += '<tr class="tab-row">'
+//             for (let i = 0; i < moscowHeaders.length; i++) {
+//                 html += `<td>${feature.get(moscowHeaders[i])}</td>`
+//             }
+//             html += '</tr>'
+//         }   
+//     }
 
-    table.innerHTML = html
-}
+//     table.innerHTML = html
+// }
 
 function hideTable() {
     document.getElementById('data-table').innerHTML = ''
 }
 
-function updateWashingtonMarkers() {
+function loadWashingtonMarkers() {
+    try {
+        var markerList = []
 
-    let source = washingtonLayer.getSource()
-    let features = source.getFeatures()
+        fetch("https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson")
+            .then(response => response.json())
+            .then(data => {
 
-    let filterText
-    localStorage.getItem('washingtonFilterText') === null ? filterText = '' : 
-        filterText = localStorage.getItem('washingtonFilterText')
+                let filterText;
+                localStorage.getItem('washingtonFilterText') === null ? filterText = '' : filterText = localStorage.getItem('washingtonFilterText')
 
-    for (let feature of features) {
-        let name = feature.get('name')
+                for (let feature of data.features) {
 
-        if (name.includes(filterText)) {
-            feature.setStyle(markerStyle)
-        }
-        else {
-            feature.setStyle(emptyStyle)
-        }
+                    let name = feature.properties.name
+
+                    if (name.includes(filterText)) {
+
+                        var coords = new Point(fromLonLat([feature.geometry.coordinates[0], feature.geometry.coordinates[1]]))
+
+                        const point = {
+                            geometry: coords
+                        }
+
+                        point['name'] = feature.properties.name
+                        point['address'] = feature.properties.address
+        
+                        var marker = new Feature(point)
+                        markerList.push(marker)
+                    }
+                }
+
+                washingtonLayer.setSource(new VectorSource({
+                    features: markerList,
+                }))
+            })
+    }
+    catch (error) {
+        console.error(error);
     }
 }
+
+// function updateWashingtonMarkers() {
+
+//     let source = washingtonLayer.getSource()
+//     let features = source.getFeatures()
+
+//     let filterText
+//     localStorage.getItem('washingtonFilterText') === null ? filterText = '' : 
+//         filterText = localStorage.getItem('washingtonFilterText')
+
+//     for (let feature of features) {
+//         let name = feature.get('name')
+
+//         if (name.includes(filterText)) {
+//             feature.setStyle(markerStyle)
+//         }
+//         else {
+//             feature.setStyle(emptyStyle)
+//         }
+//     }
+// }
 
 function loadMoscowMarkers() {
     try {
@@ -206,6 +247,10 @@ function loadMoscowMarkers() {
 
             var latCol, lonCol
 
+            let filterText;
+            localStorage.getItem('moscowFilterText') === null ? filterText = '' : 
+                filterText = localStorage.getItem('moscowFilterText')
+
             for (let h = 0; h < v.data[0].length; h++) {
 
                 if (v.data[0][h] == 'lat') {
@@ -218,21 +263,24 @@ function loadMoscowMarkers() {
 
             for (let i = 1; i < v.data.length - 1; i++) {
 
-                let lat = v.data[i][latCol]
-                let lon = v.data[i][lonCol]
-                
-                var coords = new Point(fromLonLat([lon, lat]))
-                
-                const point = {
-                    geometry: coords
-                }
+                if (v.data[i][2].includes(filterText)) {
 
-                for (let j = 0; j < moscowHeaders.length; j++) {
-                    point[moscowHeaders[j]] = v.data[i][j]
-                }
+                    let lat = v.data[i][latCol]
+                    let lon = v.data[i][lonCol]
 
-                var marker = new Feature(point)
-                markerList.push(marker)
+                    var coords = new Point(fromLonLat([lon, lat]))
+                
+                    const point = {
+                        geometry: coords
+                    }
+
+                    for (let j = 0; j < moscowHeaders.length; j++) {
+                        point[moscowHeaders[j]] = v.data[i][j]
+                    }
+
+                    var marker = new Feature(point)
+                    markerList.push(marker)
+                }
             }
 
             moscowLayer.setSource(new VectorSource({
@@ -245,26 +293,26 @@ function loadMoscowMarkers() {
     }
 }
 
-function updateMoscowMarkers() {
+// function updateMoscowMarkers() {
 
-    let source = moscowLayer.getSource()
-    let features = source.getFeatures()
+//     let source = moscowLayer.getSource()
+//     let features = source.getFeatures()
 
-    let filterText
-    localStorage.getItem('moscowFilterText') === null ? filterText = '' : 
-        filterText = localStorage.getItem('moscowFilterText')
+//     let filterText
+//     localStorage.getItem('moscowFilterText') === null ? filterText = '' : 
+//         filterText = localStorage.getItem('moscowFilterText')
 
-    for (let feature of features) {
-        let name = feature.get('name_ru')
+//     for (let feature of features) {
+//         let name = feature.get('name_ru')
 
-        if (name.includes(filterText)) {
-            feature.setStyle(markerStyle)
-        }
-        else {
-            feature.setStyle(emptyStyle)
-        }
-    }
-}
+//         if (name.includes(filterText)) {
+//             feature.setStyle(markerStyle)
+//         }
+//         else {
+//             feature.setStyle(emptyStyle)
+//         }
+//     }
+// }
 
 function onFilterChanged() {
 
@@ -275,13 +323,13 @@ function onFilterChanged() {
 
     if (checkButtons[1].checked === true) {
         localStorage.setItem('washingtonFilterText', filterText)
-        updateWashingtonTable()
-        updateWashingtonMarkers()
+        loadWashingtonTable() // Fix update
+        loadWashingtonMarkers()
     }
     else if (checkButtons[2].checked === true) {
         localStorage.setItem('moscowFilterText', filterText)
-        updateMoscowTable()
-        updateMoscowMarkers()
+        loadMoscowTable()
+        loadMoscowMarkers() 
     }
 }
 
@@ -430,7 +478,14 @@ function tour() {
           const delay = index === 0 ? 0 : 750
           setTimeout(function () {
             flyTo(locations[index], next)
-          }, delay);
+            
+            // if (checkButtons[1].checked === true) {
+            //     washingtonOverlay.setPosition(locations[index])
+            // }
+            // else if (checkButtons[2].checked === true) {
+            //     moscowOverlay.setPosition(locations[index])
+            // }
+          }, delay)
         } else {
           alert('Tour complete')
         }
@@ -461,7 +516,7 @@ const markerStyle = new Style({
     })
 })
 
-const emptyStyle = new Style()
+// const emptyStyle = new Style()
 
 const baseLayer = new Tile({
     source: new OSM(),
@@ -470,10 +525,10 @@ const baseLayer = new Tile({
 })
 
 var washingtonLayer = new VectorLayer({
-    source: new VectorSource({
-        url: 'https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson',
-        format: new GeoJSON()
-    }),
+    // source: new VectorSource({
+    //     url: 'https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson',
+    //     format: new GeoJSON()
+    // }),
     visible: false,
     style: markerStyle,
     title: WASHINGTON_LAYER_TITLE
@@ -520,6 +575,7 @@ if (currentLayerTitle != null) {
                 filterText = localStorage.getItem('washingtonFilterText')
             filter.value = filterText
             loadWashingtonTable()
+            loadWashingtonMarkers()
             myMap.style.height = '60vh'
             map.updateSize()
             break
@@ -571,6 +627,7 @@ for (let layerRadioButton of layerRadioButtons) {
                 break
             case WASHINGTON_LAYER_TITLE:
                 loadWashingtonTable()
+                loadWashingtonMarkers()
                 moscowOverlay.setPosition(undefined)
                 tableContainer.style.display = 'block'
                 myMap.style.height = '60vh'
@@ -615,8 +672,6 @@ const latField = document.getElementById('feature-lat')
 map.on('click', function (e) {
     let clickedCoordinate = e.coordinate
     map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
-        
-        washingtonOverlay.setPosition(undefined)
 
         let clickedFeatureName = feature.get('name')
         let clickedFeatureAddress = feature.get('address')
