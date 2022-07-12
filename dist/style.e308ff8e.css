@@ -92,7 +92,7 @@ body {
     margin-left: -80px;
 }
 
-.washington-overlay #feature-name::after {
+.washington-overlay #washington-name::after {
     content: '';
     position: absolute;
     top: 100%;
@@ -117,7 +117,7 @@ body {
     margin-left: -80px;
 }
 
-.moscow-overlay #id-entrance::after {
+.moscow-overlay #name_ru::after {
     content: '';
     position: absolute;
     top: 100%;

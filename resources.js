@@ -1,0 +1,8 @@
+export const BASE_LAYER_TITLE = 'baseLayer'
+export const WASHINGTON_LAYER_TITLE = 'washingtonLayer'
+export const MOSCOW_LAYER_TITLE = 'moscowLayer'
+export const WASHINGTON_FILTER_STORAGE_KEY = 'washingtonFilterText'
+export const MOSCOW_FILTER_STORAGE_KEY = 'moscowFilterText'
+export const CURRENT_CENTER_STORAGE_KEY = 'currentCenter'
+export const CURRENT_ZOOM_STORAGE_KEY = 'currentZoom'
+export const CURRENT_LAYER_STORGE_KEY = 'currentLayerTitle'
