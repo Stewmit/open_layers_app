@@ -104611,6 +104611,11 @@ map.on('moveend', function (e) {
   washingtonOverlay.setPosition(undefined);
   moscowOverlay.setPosition(undefined);
 });
+map.on('pointermove', function (e) {
+  var pixel = map.getEventPixel(e.originalEvent);
+  var hit = map.hasFeatureAtPixel(pixel);
+  map.getViewport().style.cursor = hit ? 'pointer' : '';
+});
 document.getElementById('present').addEventListener('click', present);
 },{"ol/ol.css":"node_modules/ol/ol.css","ol/layer/Tile":"node_modules/ol/layer/Tile.js","ol/source/OSM":"node_modules/ol/source/OSM.js","ol/proj":"node_modules/ol/proj.js","ol/layer":"node_modules/ol/layer.js","ol/Map":"node_modules/ol/Map.js","ol/View":"node_modules/ol/View.js","ol/style/Style":"node_modules/ol/style/Style.js","ol/layer/Vector":"node_modules/ol/layer/Vector.js","ol/source/Vector":"node_modules/ol/source/Vector.js","ol/style/Icon":"node_modules/ol/style/Icon.js","ol/format/GeoJSON":"node_modules/ol/format/GeoJSON.js","ol":"node_modules/ol/index.js","jquery":"node_modules/jquery/dist/jquery.js","ol/index":"node_modules/ol/index.js","ol/geom":"node_modules/ol/geom.js","./modules/tables":"modules/tables.js","./resources":"resources.js","./filter":"filter.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
@@ -104640,7 +104645,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55402" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49752" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

@@ -549,4 +549,10 @@ map.on('moveend', function (e) {
     moscowOverlay.setPosition(undefined)
 })
 
+map.on('pointermove', function(e) {
+    var pixel = map.getEventPixel(e.originalEvent)
+    var hit = map.hasFeatureAtPixel(pixel)
+    map.getViewport().style.cursor = hit ? 'pointer' : ''
+})
+
 document.getElementById('present').addEventListener('click', present)
