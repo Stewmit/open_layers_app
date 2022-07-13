@@ -264,6 +264,9 @@ function flyTo(location, done) {
 function present() {
     let locations, myData
 
+    if (layerRadioButtons[0].checked === true) {
+        return
+    }
     if (layerRadioButtons[1].checked === true) {
         locations = getLonLats(washingtonLayer, 'name', resources.WASHINGTON_FILTER_STORAGE_KEY)
         myData = getWashingtonData()
@@ -555,4 +558,4 @@ map.on('pointermove', function(e) {
     map.getViewport().style.cursor = hit ? 'pointer' : ''
 })
 
-document.getElementById('present').addEventListener('click', prыesent)
+document.getElementById('present').addEventListener('click', present)
