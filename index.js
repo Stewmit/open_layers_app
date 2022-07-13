@@ -17,7 +17,7 @@ import {Point} from 'ol/geom'
 
 import * as tableModule from './modules/tables'
 import * as resources from './resources'
-import * as filterModule from './filter'
+import * as filterModule from './modules/filter'
 
 const layerRadioButtons = document.querySelectorAll('.layer-bar > input[type=radio]')
 const mapElement = document.getElementById('map')

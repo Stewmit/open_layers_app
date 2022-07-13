@@ -1,5 +1,5 @@
 import * as resources from '../resources'
-import * as filterModule from '../filter'
+import * as filterModule from './filter'
 
 export var moscowHeaders = []
 
