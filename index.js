@@ -1,182 +1,234 @@
-import 'ol/ol.css';
-import Tile from 'ol/layer/Tile';
-import OSM from 'ol/source/OSM';
-import { fromLonLat } from 'ol/proj';
-import { Stamen} from 'ol/source';
-import { Group } from 'ol/layer';
-import Map from 'ol/Map';
-import View from 'ol/View';
-import Style from 'ol/style/Style';
-import VectorLayer from 'ol/layer/Vector';
-import VectorSource from 'ol/source/Vector';
-import Icon from 'ol/style/Icon';
-import GeoJSON from 'ol/format/GeoJSON';
-import { Overlay } from 'ol';
-import $ from "jquery";
+import 'ol/ol.css'
+import Tile from 'ol/layer/Tile'
+import OSM from 'ol/source/OSM'
+import { fromLonLat, toLonLat } from 'ol/proj'
+import Map from 'ol/Map'
+import View from 'ol/View'
+import { Overlay } from 'ol'
+import $ from 'jquery'
 
+import * as constants from './resources/constants'
+import * as layersResource from './resources/layers'
+import * as tableModule from './modules/tables'
+import * as filterModule from './modules/filter'
+import * as markerModule from './modules/markers'
 
-const BASE_LAYER_TITLE = 'baseLayer'
-const WASHINGTON_LAYER_TITLE = 'washingtonLayer'
-const MOSCOW_LAYER_TITLE = 'moscowLayer'
+const layerRadioButtons = document.querySelectorAll('.layer-bar > input[type=radio]')
+const mapElement = document.getElementById('map')
+const filter = document.getElementById('filter-field')
 
+filter.addEventListener('input', filterModule.onFilterChanged)
 
-// Обработка нажатия на строку таблицы
-$("body").on("click", "#data-tab tr", function () {
-    var currentRow=$(this).closest("tr"); 
-    var lon = currentRow.find("td:eq(2)").text();
-    var lat = currentRow.find("td:eq(3)").text();
+function getLonLats(layer, filterField, storageKey) {
 
-    const point = fromLonLat([lon, lat]);
+    let source = layer.getSource()
+    let features = source.getFeatures()
 
-    flyTo(point, function () {});
-});
+    let lonLats = []
 
-// Загрузка таблицы из 1-ого файла
-function loadWashingtonTable() {
-    try {
-        fetch("https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson")
-            .then(resp => resp.json())
-            .then(data => {
-                let myTab = document.getElementById('data-tab')
-                let html = ''
+    for (let feature of features) {
+        
+        let field = feature.get(filterField)
 
-                // Заголовки
-                html += '<tr>'
-                html += '<th>Название</th>'
-                html += '<th>Адрес</th>'
-                html += '<th>Долгота (lon)</th>'
-                html += '<th>Широта (lat)</th>'
-                html += '</tr>'
-
-                // Заполнение таблицы
-                for (let i = 0; i < data.features.length; i++) {
-                    html += '<tr class="tab-row">'
-                    html += `<td>${data.features[i].properties.name}</td>`
-                    html += `<td>${data.features[i].properties.address}</td>`
-                    html += `<td>${data.features[i].geometry.coordinates[0]}</td>`
-                    html += `<td>${data.features[i].geometry.coordinates[1]}</td>`
-                    html += '</tr>'
-                }
-
-                myTab.innerHTML = html;
-            });
+        if (filterModule.checkFieldForFilter(field, storageKey)) {
+            lonLats.push(feature.getGeometry().getCoordinates())
+        }
     }
-    catch (error) {
-        console.error(error);
+
+    return lonLats
+}
+
+function getWashingtonData() {
+    let result = []
+
+    for (let feature of layersResource.washingtonLayer.getSource().getFeatures()) {
+        
+        let name = feature.get('name')
+
+        if (filterModule.checkFieldForFilter(name, constants.WASHINGTON_FILTER_STORAGE_KEY)) {
+            let dataList = []
+            dataList.push(name)
+            dataList.push(feature.get('address'))
+            dataList.push('lon: ' + toLonLat(feature.getGeometry().getCoordinates())[0])
+            dataList.push('lat: ' + toLonLat(feature.getGeometry().getCoordinates())[1])
+            result.push(dataList)
+        }
+    }
+
+    return result
+}
+
+function getMoscowData() {
+    let result = []
+
+    for (let feature of layersResource.moscowLayer.getSource().getFeatures()) {
+        
+        let name_ru = feature.get('name_ru')
+
+        if (filterModule.checkFieldForFilter(name_ru, constants.MOSCOW_FILTER_STORAGE_KEY)) {
+            let dataList = []
+            dataList.push(name_ru)
+            dataList.push('station id: ' + feature.get('id_station'))
+            dataList.push('diresction: ' + feature.get('direction'))
+            dataList.push('lon: ' + feature.get('lon'))
+            dataList.push('lat: ' + feature.get('lat'))
+            result.push(dataList)
+        }
+    }
+
+    return result
+}
+
+function fillWashingtonOverlay(dataList) {
+
+    let nameField = document.getElementById('washington-name')
+    let addressField = document.getElementById('washington-address')
+    let lonField = document.getElementById('washington-lon')
+    let latField = document.getElementById('washington-lat')
+
+    let fieldsList = [nameField, addressField, lonField, latField]
+
+    for (let i = 0; i < fieldsList.length; i++) {
+        fieldsList[i].innerHTML = dataList[i]
     }
 }
 
-// Загрузка таблицы из 2-ого файла
-function loadMoscowTable() {
-    try {
-        const response = fetch('https://raw.githubusercontent.com/nextgis/metro4all/master/data/msk/portals.csv')
-            .then(response => response.text())
-            .then(v => Papa.parse(v))
-            .catch(err => console.log(err))
+function fillMoscowOverlay(dataList) {
+    let name_ru = document.getElementById('name_ru')
+    let id_station = document.getElementById('id_station')
+    let direction = document.getElementById('direction')
+    let mos_lon = document.getElementById('m-lon')
+    let mos_lat = document.getElementById('m-lat')
 
-        response.then(v => {
+    let fieldsList = [name_ru, id_station, direction, mos_lon, mos_lat]
 
-            var myTab = document.getElementById('data-tab')
-            var html = ''
-            
-            // for (let i = 0; i < v.data.length/1000; i++) {
-            //     html += '<tr>'
-            //     for (let j = 0; j < v.data[i].length; j++) {
-            //         html += `<td>${v.data[i][j]}</td>`
-            //     }
-            //     html += '</tr>'
-            // }
-            
-            // Заголовки
-            // html += '<tr>'
-            // for (let i = 0; v.data[1].length; i++) {
-            //     html += `<th>${v.data[1][i]}</th>`
-            //     console.log(v.data[1][i])
-            // }
-            // html += '</tr>'
+    for (let i = 0; i < fieldsList.length; i++) {
+        fieldsList[i].innerHTML = dataList[i]
+    }
+}
 
-            for (let k = 0; k < v.data[0].length; k++) {
-                html += `<th>${v.data[0][k]}</th>`
+function flyTo(location, done) {
+    const duration = 2000
+    const zoom = myView.getZoom()
+    let parts = 2
+    let called = false
+
+    function callback(complete) {
+        --parts;
+        if (called) {
+            return
+        }
+        if (parts === 0 || !complete) {
+            called = true
+            done(complete)
+        }
+    }
+
+    myView.animate(
+        {
+            center: location,
+            duration: duration
+        },
+        callback
+    )
+
+    myView.animate(
+        {
+            zoom: zoom - 1,
+            duration: duration / 2
+        },
+        {
+            zoom: zoom,
+            duration: duration / 2,
+        },
+        callback
+    )
+}
+
+function present() {
+    let locations, myData
+
+    if (layerRadioButtons[0].checked === true) {
+        return
+    }
+    if (layerRadioButtons[1].checked === true) {
+        locations = getLonLats(layersResource.washingtonLayer, 'name', constants.WASHINGTON_FILTER_STORAGE_KEY)
+        myData = getWashingtonData()
+    }
+    else if (layerRadioButtons[2].checked === true) {
+        locations = getLonLats(layersResource.moscowLayer, 'name_ru', constants.MOSCOW_FILTER_STORAGE_KEY)
+        myData = getMoscowData()
+    }
+
+    let index = -1
+    function next(more) {
+        if (more) {
+            ++index
+            if (index < locations.length) {
+                const delay = index === 0 ? 0 : 750
+                setTimeout(function () {
+                    flyTo(locations[index], next)
+                    if (layerRadioButtons[1].checked === true) {
+                        fillWashingtonOverlay(myData[index])
+                        washingtonOverlay.setPosition(locations[index])
+                    }
+                    else if (layerRadioButtons[2].checked === true) {
+                        fillMoscowOverlay(myData[index])
+                        moscowOverlay.setPosition(locations[index])
+                    }
+                }, delay)
+            } 
+            else {
+                alert('Tour complete')
             }
-
-            for (let i = 1; i < v.data.length - 1; i++) {
-                html += '<tr>'
-                for (let j = 0; j < v.data[i].length; j++) {
-                    html += `<td>${v.data[i][j]}</td>`
-                }
-                html += '</tr>'
-            }
-            
-            myTab.innerHTML = html
-        })
+        } 
+        else {
+            alert('Tour cancelled')
+        }
     }
-    catch (error) {
-        console.error(error);
-    }
+    next(true);
 }
 
-// Скрытть таблицу
-function hideTable() {
-    document.getElementById('data-tab').innerHTML = ''
-}
+// Handling clicks on a table row
+$("body").on("click", "#data-table tr", function () {
+    
+    var currentRow=$(this).closest("tr")
+    
+    if (layerRadioButtons[1].checked === true) {
+        var lon = currentRow.find("td:eq(2)").text()
+        var lat = currentRow.find("td:eq(3)").text()
+    }
+    else if (layerRadioButtons[2].checked === true) {
+        var lat = currentRow.find("td:eq(6)").text()
+        var lon = currentRow.find("td:eq(7)").text()
+    }
 
-// Загрузка состояния текущей позиции
+    const point = fromLonLat([lon, lat])
+
+    flyTo(point, function () {})
+})
+
+// Loading current position on page refresh
 var myView = new View({})
-myView.setCenter(fromLonLat([-77.03934833759097, 38.89932830161759]))
-myView.setZoom(16)
-// const currentCenter = localStorage.getItem('currentCenter')
-// const currentZoom = localStorage.getItem('currentZoom')
-// if (currentCenter === null || currentZoom === null) {
-//     myView.setCenter(fromLonLat([-77.03934833759097, 38.89932830161759]))
-//     myView.setZoom(16)
-// }
-// else {
-//     myView.setCenter(currentCenter.split(',').map(val => parseFloat(val)))
-//     myView.setZoom(currentZoom)
-// }
+const currentCenter = localStorage.getItem(constants.CURRENT_CENTER_STORAGE_KEY)
+const currentZoom = localStorage.getItem(constants.CURRENT_ZOOM_STORAGE_KEY)
 
-// Сохранение текущей позиции
+if (currentCenter === null || currentZoom === null) {
+    myView.setCenter(fromLonLat([-77.03934833759097, 38.89932830161759]))
+    myView.setZoom(16)
+}
+else {
+    myView.setCenter(currentCenter.split(',').map(val => parseFloat(val)))
+    myView.setZoom(currentZoom)
+}
+
+// Saving current position
 myView.on('change:center', function() { 
     let center = myView.getCenter()
     let zoom = myView.getZoom()
-    localStorage.setItem('currentCenter', center)
-    localStorage.setItem('currentZoom', zoom)
-});
-
-function flyTo(location, done) {
-    const duration = 2000;
-    const zoom = myView.getZoom();
-    let parts = 2;
-    let called = false;
-    function callback(complete) {
-      --parts;
-      if (called) {
-        return;
-      }
-      if (parts === 0 || !complete) {
-        called = true;
-        done(complete);
-      }
-    }
-    myView.animate(
-      {
-        center: location,
-        duration: duration,
-      },
-      callback
-    );
-    myView.animate(
-      {
-        zoom: zoom - 1,
-        duration: duration / 2,
-      },
-      {
-        zoom: zoom,
-        duration: duration / 2,
-      },
-      callback
-    );
-}
+    localStorage.setItem(constants.CURRENT_CENTER_STORAGE_KEY, center)
+    localStorage.setItem(constants.CURRENT_ZOOM_STORAGE_KEY, zoom)
+})
 
 const map = new Map({
     layers: [
@@ -184,128 +236,174 @@ const map = new Map({
             source: new OSM(),
         })
     ],
+    controls: [],
     target: 'map',
     view: myView
-});
+})
 
-const baseLayer = new Tile({
-    source: new OSM(),
-    visible: true,
-    title: BASE_LAYER_TITLE
-});
+map.addLayer(layersResource.layersGroup)
 
-var washingtonLayer = new VectorLayer({
-    source: new VectorSource({
-        url: 'https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson',
-        format: new GeoJSON()
-    }),
-    style: new Style({
-        image: new Icon({
-            anchor: [0.5, 46],
-            anchorXUnits: 'fraction',
-            anchorYUnits: 'pixels',
-            src: 'http://openlayers.org/en/latest/examples/data/icon.png'
-        })
-    }),
-    visible: false,
-    title: WASHINGTON_LAYER_TITLE
-});
-
-const moscowLayer = new Tile({
-    source: new Stamen({layer: 'watercolor'}),
-    visible: false,
-    title: MOSCOW_LAYER_TITLE
-});
-
-const layersGroup = new Group({
-    layers: [
-        baseLayer,
-        washingtonLayer,
-        moscowLayer
-    ]
-});
-map.addLayer(layersGroup)
-
-// Загрузка состояния текущего слоя
-var currentLayerTitle = localStorage.getItem('currentLayerTitle')
+// Loading the state of the current layer
+var currentLayerTitle = localStorage.getItem(constants.CURRENT_LAYER_STORGE_KEY)
 if (currentLayerTitle != null) {
 
-    const baseLayerElements = document.querySelectorAll('.layer-bar > input[type=radio]')
+    let tableContainer = document.getElementById('table-container')
+    let filter = document.getElementById('filter-field')
+    let filterText
     
     switch (currentLayerTitle) {
-        case BASE_LAYER_TITLE:
-            baseLayerElements[0].checked = true;
+        case constants.BASE_LAYER_TITLE:
+            layerRadioButtons[0].checked = true
+            tableContainer.style.display = 'none'
+            mapElement.style.height = '100vh'
+            map.updateSize()
             break
-        case WASHINGTON_LAYER_TITLE:
-            baseLayerElements[1].checked = true;
-            loadWashingtonTable()
+        case constants.WASHINGTON_LAYER_TITLE:
+            layerRadioButtons[1].checked = true
+            tableContainer.style.display = 'block'
+            mapElement.style.height = '60vh'
+            map.updateSize()
+
+            filterText = localStorage.getItem(constants.WASHINGTON_FILTER_STORAGE_KEY)
+            filterText === null ? filter.value = '' : filter.value = filterText
+            tableModule.loadWashingtonTable()
+            markerModule.loadWashingtonMarkers()
             break
-        case MOSCOW_LAYER_TITLE:
-            baseLayerElements[2].checked = true;
-            break;
+        case constants.MOSCOW_LAYER_TITLE:
+            layerRadioButtons[2].checked = true
+            tableContainer.style.display = 'block'
+            mapElement.style.height = '60vh'
+            map.updateSize()
+            
+            filterText = localStorage.getItem(constants.MOSCOW_FILTER_STORAGE_KEY)
+            filterText === null ? filter.value = '' : filter.value = filterText
+            tableModule.loadMoscowTable()
+            markerModule.loadMoscowMarkers()
+            break
     }
 
-    layersGroup.getLayers().forEach(function(element, index, array) {
+    layersResource.layersGroup.getLayers().forEach(function(element, index, array) {
         let layerTitle = element.get('title')
         element.setVisible(layerTitle === currentLayerTitle)
     })
 }
 
-// Переключение между слоями
-const layerRadioButtons = document.querySelectorAll('.layer-bar > input[type=radio]')
-
+// Switching layers
 for (let layerRadioButton of layerRadioButtons) {
     
     layerRadioButton.addEventListener('change', function() {
 
         let chosenLayerTitle = this.value
-        localStorage.setItem('currentLayerTitle', chosenLayerTitle)
+        localStorage.setItem(constants.CURRENT_LAYER_STORGE_KEY, chosenLayerTitle)
 
-        layersGroup.getLayers().forEach(function(element, index, array) {
+        layersResource.layersGroup.getLayers().forEach(function(element, index, array) {
             let layerTitle = element.get('title')
             element.setVisible(layerTitle === chosenLayerTitle)
         })
 
+        let filter = document.getElementById('filter-field')
+        let tableContainer = document.getElementById('table-container')
+        let filterText
+
         switch (chosenLayerTitle) {
-            case BASE_LAYER_TITLE:
-                hideTable()
+            case constants.BASE_LAYER_TITLE:
+                tableModule.hideTable()
+                tableContainer.style.display = 'none'
+                mapElement.style.height = '100vh'
+                filter.value = ''
                 break
-            case WASHINGTON_LAYER_TITLE:
-                hideTable()
-                loadWashingtonTable()
+            case constants.WASHINGTON_LAYER_TITLE:
+                tableContainer.style.display = 'block'
+                mapElement.style.height = '60vh'
+
+                filterText = localStorage.getItem(constants.WASHINGTON_FILTER_STORAGE_KEY)
+                filterText === null ? filter.value = '' : filter.value = filterText
+            
+                tableModule.loadWashingtonTable()
+                markerModule.loadWashingtonMarkers()
+                moscowOverlay.setPosition(undefined)
                 break
-            case MOSCOW_LAYER_TITLE:
-                hideTable()
-                loadMoscowTable()
-                break;
+            case constants.MOSCOW_LAYER_TITLE:
+                tableContainer.style.display = 'block'
+                mapElement.style.height = '60vh'
+
+                filterText = localStorage.getItem(constants.MOSCOW_FILTER_STORAGE_KEY)
+                filterText === null ? filter.value = '' : filter.value = filterText
+
+                tableModule.loadMoscowTable()
+                markerModule.loadMoscowMarkers()
+                washingtonOverlay.setPosition(undefined)
+                break
         }
+        map.updateSize()
     })
 }
 
-// Всплывающее окно
-const overlayContainerElement = document.querySelector('.overlay-container')
-const overlayLayer = new Overlay({
-    element: overlayContainerElement
-});
-map.addOverlay(overlayLayer)
+let washingtonContainer = document.querySelector('.washington-overlay')
+let washingtonOverlay = new Overlay({element: washingtonContainer})
+map.addOverlay(washingtonOverlay)
 
-// Обработка нажатия на маркер 2-ого слоя
-const overlayFeatureName = document.getElementById('feature-name')
-const overlayFeatureAddress = document.getElementById('feature-address')
+let moscowContainer = document.querySelector('.moscow-overlay')
+let moscowOverlay = new Overlay({element: moscowContainer})
+map.addOverlay(moscowOverlay)
 
+// On Washington marker click handler
 map.on('click', function (e) {
     let clickedCoordinate = e.coordinate
     map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
-        overlayLayer.setPosition(undefined)
-        let clickedFeatureName = feature.get('name')
-        let clickedFeatureAddress = feature.get('address')
-        overlayLayer.setPosition(clickedCoordinate)
-        overlayFeatureName.innerHTML = clickedFeatureName
-        overlayFeatureAddress.innerHTML = clickedFeatureAddress
+
+        washingtonOverlay.setPosition(clickedCoordinate)
+
+        let dataList = []
+
+        dataList.push(feature.get('name'))
+        dataList.push(feature.get('address'))
+        let lonLat = toLonLat(feature.getGeometry().getCoordinates())
+        dataList.push('lon: ' + lonLat[0].toFixed(6))
+        dataList.push('lat: ' + lonLat[1].toFixed(6))
+
+        fillWashingtonOverlay(dataList)
     },
     {
         layerFilter: function (layerCandidate) {
-            return layerCandidate.get('title') === WASHINGTON_LAYER_TITLE
+            return layerCandidate.get('title') === constants.WASHINGTON_LAYER_TITLE
         }
     })
-});
+})
+
+// Moskow marker click handler
+map.on('click', function (e) {
+    let clickedCoordinate = e.coordinate
+    map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
+
+        moscowOverlay.setPosition(clickedCoordinate)
+
+        let dataList = []
+
+        dataList.push(feature.get('name_ru'))
+        dataList.push('station id: ' + feature.get('id_station'))
+        dataList.push('direction: ' + feature.get('direction'))
+        dataList.push('lon: ' + feature.get('lon'))
+        dataList.push('lat: ' + feature.get('lat'))
+
+        fillMoscowOverlay(dataList)
+    },
+    {
+        layerFilter: function (layerCandidate) {
+            return layerCandidate.get('title') === constants.MOSCOW_LAYER_TITLE
+        }
+    })
+})
+
+map.on('moveend', function (e) {
+    washingtonOverlay.setPosition(undefined)
+    moscowOverlay.setPosition(undefined)
+})
+
+map.on('pointermove', function(e) {
+    var pixel = map.getEventPixel(e.originalEvent)
+    var hit = map.hasFeatureAtPixel(pixel)
+    map.getViewport().style.cursor = hit ? 'pointer' : ''
+})
+
+document.getElementById('present').addEventListener('click', present)
