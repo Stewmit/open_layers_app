@@ -555,4 +555,4 @@ map.on('pointermove', function(e) {
     map.getViewport().style.cursor = hit ? 'pointer' : ''
 })
 
-document.getElementById('present').addEventListener('click', present)
+document.getElementById('present').addEventListener('click', prыesent)
