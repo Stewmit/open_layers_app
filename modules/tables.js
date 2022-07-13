@@ -1,4 +1,4 @@
-import * as resources from '../resources'
+import * as constants from '../resources/constants'
 import * as filterModule from './filter'
 
 export var moscowHeaders = []
@@ -27,7 +27,7 @@ export function loadWashingtonTable() {
 
                     let name = feature.properties.name
 
-                    if (filterModule.checkFieldForFilter(name, resources.WASHINGTON_FILTER_STORAGE_KEY)) {
+                    if (filterModule.checkFieldForFilter(name, constants.WASHINGTON_FILTER_STORAGE_KEY)) {
                         html += '<tr class="tab-row">'
                         html += `<td>${name}</td>`
                         html += `<td>${feature.properties.address}</td>`
@@ -66,7 +66,7 @@ export function loadMoscowTable() {
 
                 for (let i = 1; i < v.data.length - 1; i++) {
                     let name = v.data[i][2]
-                    if (filterModule.checkFieldForFilter(name, resources.MOSCOW_FILTER_STORAGE_KEY)) {
+                    if (filterModule.checkFieldForFilter(name, constants.MOSCOW_FILTER_STORAGE_KEY)) {
                         html += '<tr class="tab-row">'
                         for (let j = 0; j < v.data[i].length; j++) {
                             html += `<td>${v.data[i][j]}</td>`

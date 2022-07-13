@@ -2,138 +2,22 @@ import 'ol/ol.css'
 import Tile from 'ol/layer/Tile'
 import OSM from 'ol/source/OSM'
 import { fromLonLat, toLonLat } from 'ol/proj'
-import { Group } from 'ol/layer'
 import Map from 'ol/Map'
 import View from 'ol/View'
-import Style from 'ol/style/Style'
-import VectorLayer from 'ol/layer/Vector'
-import VectorSource from 'ol/source/Vector'
-import Icon from 'ol/style/Icon'
-import GeoJSON from 'ol/format/GeoJSON'
 import { Overlay } from 'ol'
-import $, { data } from "jquery"
-import { Feature } from 'ol/index'
-import {Point} from 'ol/geom'
+import $ from 'jquery'
 
+import * as constants from './resources/constants'
+import * as layersResource from './resources/layers'
 import * as tableModule from './modules/tables'
-import * as resources from './resources'
 import * as filterModule from './modules/filter'
+import * as markerModule from './modules/markers'
 
 const layerRadioButtons = document.querySelectorAll('.layer-bar > input[type=radio]')
 const mapElement = document.getElementById('map')
 const filter = document.getElementById('filter-field')
-filter.addEventListener('input', onFilterChanged)
 
-function loadWashingtonMarkers() {
-    try {
-        var markerList = []
-
-        fetch("https://raw.githubusercontent.com/benbalter/dc-wifi-social/master/bars.geojson")
-            .then(response => response.json())
-            .then(data => {
-
-                for (let feature of data.features) {
-
-                    let name = feature.properties.name
-
-                    if (filterModule.checkFieldForFilter(name, resources.WASHINGTON_FILTER_STORAGE_KEY)) {
-
-                        var coords = new Point(fromLonLat([feature.geometry.coordinates[0], feature.geometry.coordinates[1]]))
-
-                        const point = {
-                            geometry: coords
-                        }
-
-                        point['name'] = feature.properties.name
-                        point['address'] = feature.properties.address
-        
-                        var marker = new Feature(point)
-                        markerList.push(marker)
-                    }
-                }
-
-                washingtonLayer.setSource(new VectorSource({
-                    features: markerList,
-                }))
-            })
-    }
-    catch (error) {
-        console.error(error);
-    }
-}
-
-function loadMoscowMarkers() {
-    try {
-        var markerList = []
-
-        const response = fetch('https://raw.githubusercontent.com/nextgis/metro4all/master/data/msk/portals.csv')
-            .then(response => response.text())
-            .then(v => Papa.parse(v))
-            .catch(err => console.log(err))
-
-        response.then(v => {
-
-            var latCol, lonCol
-
-            for (let h = 0; h < v.data[0].length; h++) {
-
-                if (v.data[0][h] == 'lat') {
-                    latCol = h
-                }
-                else if (v.data[0][h] == 'lon') {
-                    lonCol = h
-                }
-            }
-
-            for (let i = 1; i < v.data.length - 1; i++) {
-
-                let name_ru = v.data[i][2]
-                if (filterModule.checkFieldForFilter(name_ru, resources.MOSCOW_FILTER_STORAGE_KEY)) {
-
-                    let lat = v.data[i][latCol]
-                    let lon = v.data[i][lonCol]
-
-                    var coords = new Point(fromLonLat([lon, lat]))
-                
-                    const point = {
-                        geometry: coords
-                    }
-
-                    for (let j = 0; j < tableModule.moscowHeaders.length; j++) {
-                        point[tableModule.moscowHeaders[j]] = v.data[i][j]
-                    }
-
-                    var marker = new Feature(point)
-                    markerList.push(marker)
-                }
-            }
-
-            moscowLayer.setSource(new VectorSource({
-                features: markerList,
-            }))
-        })
-    }
-    catch (error) {
-        console.error(error);
-    }
-}
-
-function onFilterChanged() {
-
-    var filter = document.getElementById('filter-field')
-    var filterText = filter.value
-
-    if (layerRadioButtons[1].checked === true) {
-        localStorage.setItem(resources.WASHINGTON_FILTER_STORAGE_KEY, filterText)
-        tableModule.loadWashingtonTable() 
-        loadWashingtonMarkers()
-    }
-    else if (layerRadioButtons[2].checked === true) {
-        localStorage.setItem(resources.MOSCOW_FILTER_STORAGE_KEY, filterText)
-        tableModule.loadMoscowTable()
-        loadMoscowMarkers() 
-    }
-}
+filter.addEventListener('input', filterModule.onFilterChanged)
 
 function getLonLats(layer, filterField, storageKey) {
 
@@ -157,11 +41,11 @@ function getLonLats(layer, filterField, storageKey) {
 function getWashingtonData() {
     let result = []
 
-    for (let feature of washingtonLayer.getSource().getFeatures()) {
+    for (let feature of layersResource.washingtonLayer.getSource().getFeatures()) {
         
         let name = feature.get('name')
 
-        if (filterModule.checkFieldForFilter(name, resources.WASHINGTON_FILTER_STORAGE_KEY)) {
+        if (filterModule.checkFieldForFilter(name, constants.WASHINGTON_FILTER_STORAGE_KEY)) {
             let dataList = []
             dataList.push(name)
             dataList.push(feature.get('address'))
@@ -177,11 +61,11 @@ function getWashingtonData() {
 function getMoscowData() {
     let result = []
 
-    for (let feature of moscowLayer.getSource().getFeatures()) {
+    for (let feature of layersResource.moscowLayer.getSource().getFeatures()) {
         
         let name_ru = feature.get('name_ru')
 
-        if (filterModule.checkFieldForFilter(name_ru, resources.MOSCOW_FILTER_STORAGE_KEY)) {
+        if (filterModule.checkFieldForFilter(name_ru, constants.MOSCOW_FILTER_STORAGE_KEY)) {
             let dataList = []
             dataList.push(name_ru)
             dataList.push('station id: ' + feature.get('id_station'))
@@ -268,11 +152,11 @@ function present() {
         return
     }
     if (layerRadioButtons[1].checked === true) {
-        locations = getLonLats(washingtonLayer, 'name', resources.WASHINGTON_FILTER_STORAGE_KEY)
+        locations = getLonLats(layersResource.washingtonLayer, 'name', constants.WASHINGTON_FILTER_STORAGE_KEY)
         myData = getWashingtonData()
     }
     else if (layerRadioButtons[2].checked === true) {
-        locations = getLonLats(moscowLayer, 'name_ru', resources.MOSCOW_FILTER_STORAGE_KEY)
+        locations = getLonLats(layersResource.moscowLayer, 'name_ru', constants.MOSCOW_FILTER_STORAGE_KEY)
         myData = getMoscowData()
     }
 
@@ -324,10 +208,10 @@ $("body").on("click", "#data-table tr", function () {
     flyTo(point, function () {})
 })
 
-// Load current position state
+// Loading current position on page refresh
 var myView = new View({})
-const currentCenter = localStorage.getItem(resources.CURRENT_CENTER_STORAGE_KEY)
-const currentZoom = localStorage.getItem(resources.CURRENT_ZOOM_STORAGE_KEY)
+const currentCenter = localStorage.getItem(constants.CURRENT_CENTER_STORAGE_KEY)
+const currentZoom = localStorage.getItem(constants.CURRENT_ZOOM_STORAGE_KEY)
 
 if (currentCenter === null || currentZoom === null) {
     myView.setCenter(fromLonLat([-77.03934833759097, 38.89932830161759]))
@@ -338,12 +222,12 @@ else {
     myView.setZoom(currentZoom)
 }
 
-// Save current position
+// Saving current position
 myView.on('change:center', function() { 
     let center = myView.getCenter()
     let zoom = myView.getZoom()
-    localStorage.setItem(resources.CURRENT_CENTER_STORAGE_KEY, center)
-    localStorage.setItem(resources.CURRENT_ZOOM_STORAGE_KEY, zoom)
+    localStorage.setItem(constants.CURRENT_CENTER_STORAGE_KEY, center)
+    localStorage.setItem(constants.CURRENT_ZOOM_STORAGE_KEY, zoom)
 })
 
 const map = new Map({
@@ -357,86 +241,48 @@ const map = new Map({
     view: myView
 })
 
-const markerStyle = new Style({
-    image: new Icon({
-        anchor: [0.5, 46],
-        anchorXUnits: 'fraction',
-        anchorYUnits: 'pixels',
-        src: 'http://openlayers.org/en/latest/examples/data/icon.png'
-    })
-})
-
-const baseLayer = new Tile({
-    source: new OSM(),
-    visible: true,
-    title: resources.BASE_LAYER_TITLE
-})
-
-const washingtonLayer = new VectorLayer({
-    visible: false,
-    style: markerStyle,
-    title: resources.WASHINGTON_LAYER_TITLE
-})
-
-const moscowLayer = new VectorLayer({
-    visible: false,
-    style: markerStyle,
-    title: resources.MOSCOW_LAYER_TITLE
-})
-
-const layersGroup = new Group({
-    layers: [
-        baseLayer,
-        washingtonLayer,
-        moscowLayer
-    ]
-})
-
-map.addLayer(layersGroup)
+map.addLayer(layersResource.layersGroup)
 
 // Loading the state of the current layer
-var currentLayerTitle = localStorage.getItem(resources.CURRENT_LAYER_STORGE_KEY)
+var currentLayerTitle = localStorage.getItem(constants.CURRENT_LAYER_STORGE_KEY)
 if (currentLayerTitle != null) {
 
     let tableContainer = document.getElementById('table-container')
     let filter = document.getElementById('filter-field')
-
     let filterText
     
     switch (currentLayerTitle) {
-        case resources.BASE_LAYER_TITLE:
-            layerRadioButtons[0].checked = true;
+        case constants.BASE_LAYER_TITLE:
+            layerRadioButtons[0].checked = true
             tableContainer.style.display = 'none'
             mapElement.style.height = '100vh'
             map.updateSize()
             break
-        case resources.WASHINGTON_LAYER_TITLE:
-            layerRadioButtons[1].checked = true;
+        case constants.WASHINGTON_LAYER_TITLE:
+            layerRadioButtons[1].checked = true
             tableContainer.style.display = 'block'
-            localStorage.getItem('washingtonFilterText') === null ? filterText = '' : 
-                filterText = localStorage.getItem('washingtonFilterText')
-            filter.value = filterText
+            mapElement.style.height = '60vh'
+            map.updateSize()
+
+            filterText = localStorage.getItem(constants.WASHINGTON_FILTER_STORAGE_KEY)
+            filterText === null ? filter.value = '' : filter.value = filterText
             tableModule.loadWashingtonTable()
-            loadWashingtonMarkers()
-            mapElement.style.height = '60vh'
-            map.updateSize()
+            markerModule.loadWashingtonMarkers()
             break
-        case resources.MOSCOW_LAYER_TITLE:
-            layerRadioButtons[2].checked = true;
+        case constants.MOSCOW_LAYER_TITLE:
+            layerRadioButtons[2].checked = true
             tableContainer.style.display = 'block'
-
-            filterText = localStorage.getItem(resources.MOSCOW_FILTER_STORAGE_KEY)
-            if (filterText === null) filterText = ''
-            filter.value = filterText
-
-            tableModule.loadMoscowTable()
-            loadMoscowMarkers()
             mapElement.style.height = '60vh'
             map.updateSize()
-            break;
+            
+            filterText = localStorage.getItem(constants.MOSCOW_FILTER_STORAGE_KEY)
+            filterText === null ? filter.value = '' : filter.value = filterText
+            tableModule.loadMoscowTable()
+            markerModule.loadMoscowMarkers()
+            break
     }
 
-    layersGroup.getLayers().forEach(function(element, index, array) {
+    layersResource.layersGroup.getLayers().forEach(function(element, index, array) {
         let layerTitle = element.get('title')
         element.setVisible(layerTitle === currentLayerTitle)
     })
@@ -448,9 +294,9 @@ for (let layerRadioButton of layerRadioButtons) {
     layerRadioButton.addEventListener('change', function() {
 
         let chosenLayerTitle = this.value
-        localStorage.setItem('currentLayerTitle', chosenLayerTitle)
+        localStorage.setItem(constants.CURRENT_LAYER_STORGE_KEY, chosenLayerTitle)
 
-        layersGroup.getLayers().forEach(function(element, index, array) {
+        layersResource.layersGroup.getLayers().forEach(function(element, index, array) {
             let layerTitle = element.get('title')
             element.setVisible(layerTitle === chosenLayerTitle)
         })
@@ -460,31 +306,33 @@ for (let layerRadioButton of layerRadioButtons) {
         let filterText
 
         switch (chosenLayerTitle) {
-            case resources.BASE_LAYER_TITLE:
+            case constants.BASE_LAYER_TITLE:
                 tableModule.hideTable()
                 tableContainer.style.display = 'none'
                 mapElement.style.height = '100vh'
                 filter.value = ''
                 break
-            case resources.WASHINGTON_LAYER_TITLE:
+            case constants.WASHINGTON_LAYER_TITLE:
+                tableContainer.style.display = 'block'
+                mapElement.style.height = '60vh'
+
+                filterText = localStorage.getItem(constants.WASHINGTON_FILTER_STORAGE_KEY)
+                filterText === null ? filter.value = '' : filter.value = filterText
+            
                 tableModule.loadWashingtonTable()
-                loadWashingtonMarkers()
+                markerModule.loadWashingtonMarkers()
                 moscowOverlay.setPosition(undefined)
-                tableContainer.style.display = 'block'
-                mapElement.style.height = '60vh'
-                localStorage.getItem('washingtonFilterText') === null ? filterText = '' : 
-                    filterText = localStorage.getItem('washingtonFilterText')
-                filter.value = filterText
                 break
-            case resources.MOSCOW_LAYER_TITLE:
-                tableModule.loadMoscowTable()
-                loadMoscowMarkers()
-                washingtonOverlay.setPosition(undefined)
+            case constants.MOSCOW_LAYER_TITLE:
                 tableContainer.style.display = 'block'
                 mapElement.style.height = '60vh'
-                localStorage.getItem('moscowFilterText') === null ? filterText = '' : 
-                    filterText = localStorage.getItem('moscowFilterText')
-                filter.value = filterText
+
+                filterText = localStorage.getItem(constants.MOSCOW_FILTER_STORAGE_KEY)
+                filterText === null ? filter.value = '' : filter.value = filterText
+
+                tableModule.loadMoscowTable()
+                markerModule.loadMoscowMarkers()
+                washingtonOverlay.setPosition(undefined)
                 break
         }
         map.updateSize()
@@ -499,7 +347,7 @@ let moscowContainer = document.querySelector('.moscow-overlay')
 let moscowOverlay = new Overlay({element: moscowContainer})
 map.addOverlay(moscowOverlay)
 
-// On Washington marker click
+// On Washington marker click handler
 map.on('click', function (e) {
     let clickedCoordinate = e.coordinate
     map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
@@ -518,12 +366,12 @@ map.on('click', function (e) {
     },
     {
         layerFilter: function (layerCandidate) {
-            return layerCandidate.get('title') === resources.WASHINGTON_LAYER_TITLE
+            return layerCandidate.get('title') === constants.WASHINGTON_LAYER_TITLE
         }
     })
 })
 
-// On Moskow marker click
+// Moskow marker click handler
 map.on('click', function (e) {
     let clickedCoordinate = e.coordinate
     map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
@@ -542,7 +390,7 @@ map.on('click', function (e) {
     },
     {
         layerFilter: function (layerCandidate) {
-            return layerCandidate.get('title') === resources.MOSCOW_LAYER_TITLE
+            return layerCandidate.get('title') === constants.MOSCOW_LAYER_TITLE
         }
     })
 })
