@@ -347,52 +347,37 @@ let moscowContainer = document.querySelector('.moscow-overlay')
 let moscowOverlay = new Overlay({element: moscowContainer})
 map.addOverlay(moscowOverlay)
 
-// On Washington marker click handler
-map.on('click', function (e) {
+// Marker Click Handler
+map.on('click', (e) => {
     let clickedCoordinate = e.coordinate
-    map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
-
-        washingtonOverlay.setPosition(clickedCoordinate)
-
+    let feature = map.forEachFeatureAtPixel(e.pixel, (feature) => feature)
+    
+    if (feature !== undefined) {
+        let currentLayer = localStorage.getItem(constants.CURRENT_LAYER_STORGE_KEY)
         let dataList = []
 
-        dataList.push(feature.get('name'))
-        dataList.push(feature.get('address'))
-        let lonLat = toLonLat(feature.getGeometry().getCoordinates())
-        dataList.push('lon: ' + lonLat[0].toFixed(6))
-        dataList.push('lat: ' + lonLat[1].toFixed(6))
+        switch (currentLayer) {
+            case constants.WASHINGTON_LAYER_TITLE: 
+                washingtonOverlay.setPosition(clickedCoordinate)
+                dataList.push(feature.get('name'))
+                dataList.push(feature.get('address'))
+                let lonLat = toLonLat(feature.getGeometry().getCoordinates())
+                dataList.push('lon: ' + lonLat[0].toFixed(6))
+                dataList.push('lat: ' + lonLat[1].toFixed(6))
+                fillWashingtonOverlay(dataList)
+                break
 
-        fillWashingtonOverlay(dataList)
-    },
-    {
-        layerFilter: function (layerCandidate) {
-            return layerCandidate.get('title') === constants.WASHINGTON_LAYER_TITLE
+            case constants.MOSCOW_LAYER_TITLE: 
+                moscowOverlay.setPosition(clickedCoordinate)
+                dataList.push(feature.get('name_ru'))
+                dataList.push('station id: ' + feature.get('id_station'))
+                dataList.push('direction: ' + feature.get('direction'))
+                dataList.push('lon: ' + feature.get('lon'))
+                dataList.push('lat: ' + feature.get('lat'))
+                fillMoscowOverlay(dataList)
+                break
         }
-    })
-})
-
-// Moskow marker click handler
-map.on('click', function (e) {
-    let clickedCoordinate = e.coordinate
-    map.forEachFeatureAtPixel(e.pixel, function (feature, layer) {
-
-        moscowOverlay.setPosition(clickedCoordinate)
-
-        let dataList = []
-
-        dataList.push(feature.get('name_ru'))
-        dataList.push('station id: ' + feature.get('id_station'))
-        dataList.push('direction: ' + feature.get('direction'))
-        dataList.push('lon: ' + feature.get('lon'))
-        dataList.push('lat: ' + feature.get('lat'))
-
-        fillMoscowOverlay(dataList)
-    },
-    {
-        layerFilter: function (layerCandidate) {
-            return layerCandidate.get('title') === constants.MOSCOW_LAYER_TITLE
-        }
-    })
+    }
 })
 
 map.on('moveend', function (e) {
