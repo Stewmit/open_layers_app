@@ -366,7 +366,6 @@ map.on('click', (e) => {
                 dataList.push('lat: ' + lonLat[1].toFixed(6))
                 fillWashingtonOverlay(dataList)
                 break
-
             case constants.MOSCOW_LAYER_TITLE: 
                 moscowOverlay.setPosition(clickedCoordinate)
                 dataList.push(feature.get('name_ru'))
