@@ -100,6 +100,7 @@ body {
     bottom: 100%;
     left: 50%;
     margin-left: -80px;
+    cursor: default;
 }
 
 .washington-overlay #washington-name::after {
@@ -111,6 +112,7 @@ body {
     border-width: 10px;
     border-style: solid;
     border-color: #fff transparent transparent transparent;
+    cursor: default;
 }
 
 .moscow-overlay {
@@ -125,6 +127,7 @@ body {
     bottom: 100%;
     left: 50%;
     margin-left: -80px;
+    cursor: default;
 }
 
 .moscow-overlay #name_ru::after {
@@ -136,6 +139,7 @@ body {
     border-width: 10px;
     border-style: solid;
     border-color: #fff transparent transparent transparent;
+    cursor: default;
 }
 
 .table-container {
@@ -144,7 +148,7 @@ body {
     overflow-y: scroll;
 }
 
-.tab-row{
+.tab-row {
     cursor: pointer;
 }
 
